@@ -1,10 +1,18 @@
+// components/ThemeSwitcher.js
 'use client'
-
-import { Moon, Sun } from 'lucide-react'
-import { useTheme } from './ThemeProvider'
+import { useTheme } from './ThemeContext';
+import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeSwitcher() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, mounted } = useTheme();
+
+  if (!mounted) {
+    return (
+      <button className="p-2 rounded-full">
+        <div className="w-5 h-5" /> {/* Placeholder */}
+      </button>
+    );
+  }
 
   return (
     <button
@@ -14,5 +22,5 @@ export default function ThemeSwitcher() {
     >
       {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
     </button>
-  )
+  );
 }

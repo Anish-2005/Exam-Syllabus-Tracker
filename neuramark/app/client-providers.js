@@ -1,7 +1,7 @@
 // app/client-providers.js
 'use client'
 
-import { ThemeProvider } from './components/ThemeProvider'
+import { ThemeProvider } from './components/ThemeContext'
 import ServiceWorkerRegister from './components/ServiceWorkerRegister'
 import OfflineStatus from './components/OfflineStatus'
 
