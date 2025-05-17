@@ -26,6 +26,7 @@ export default function Dashboard() {
     const [branches, setBranches] = useState([]);
     const [years, setYears] = useState([]);
     const [semesters, setSemesters] = useState([]);
+    const [selectedCopySubjects, setSelectedCopySubjects] = useState([]);
     const [specializations, setSpecializations] = useState({});
     const [showAddSubject, setShowAddSubject] = useState(false);
     const [newSubject, setNewSubject] = useState({
@@ -258,7 +259,13 @@ export default function Dashboard() {
             console.error('Error updating module status:', error);
         }
     };
-
+    const toggleCopySubjectSelection = (subjectId) => {
+        setSelectedCopySubjects(prev =>
+            prev.includes(subjectId)
+                ? prev.filter(id => id !== subjectId)
+                : [...prev, subjectId]
+        );
+    };
     const isModuleCompleted = (subjectId, moduleIndex) => {
         if (!userProgress || !subjectId) return false;
         const subjectKey = `subject_${subjectId}`;
@@ -583,16 +590,25 @@ export default function Dashboard() {
     };
 
     const copySubjectsToBranch = async () => {
-        if (!copyToBranch || !copyToYear || copySubjects.length === 0) {
-            alert('Please select target branch and year and ensure there are subjects to copy');
+        if (!copyToBranch || !copyToYear) {
+            alert('Please select target branch and year');
+            return;
+        }
+
+        // Determine which subjects to copy
+        const subjectsToCopy = selectedCopySubjects.length > 0
+            ? copySubjects.filter(subject => selectedCopySubjects.includes(subject.id))
+            : copySubjects;
+
+        if (subjectsToCopy.length === 0) {
+            alert('No subjects selected for copying');
             return;
         }
 
         try {
             setIsCopying(true);
-            const batch = [];
 
-            for (const subject of copySubjects) {
+            for (const subject of subjectsToCopy) {
                 const newSubjectData = {
                     name: subject.name,
                     code: subject.code,
@@ -607,7 +623,7 @@ export default function Dashboard() {
                 await addDoc(collection(db, 'syllabus'), newSubjectData);
             }
 
-            alert('Subjects copied successfully!');
+            alert(`${subjectsToCopy.length} subject(s) copied successfully!`);
             setShowCopyDialog(false);
             setCopyFromBranch('');
             setCopyFromYear(1);
@@ -616,7 +632,9 @@ export default function Dashboard() {
             setCopyToYear(1);
             setCopyToSemester(null);
             setCopySubjects([]);
+            setSelectedCopySubjects([]);
 
+            // Refresh the current view
             const q = query(
                 collection(db, 'syllabus'),
                 where('branch', '==', selectedBranch),
@@ -635,6 +653,16 @@ export default function Dashboard() {
             setIsCopying(false);
         }
     };
+
+    // Add this function to select/deselect all subjects
+    const toggleSelectAllCopySubjects = () => {
+        if (selectedCopySubjects.length === copySubjects.length) {
+            setSelectedCopySubjects([]);
+        } else {
+            setSelectedCopySubjects(copySubjects.map(subject => subject.id));
+        }
+    };
+
 
     const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
     const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
@@ -982,6 +1010,7 @@ export default function Dashboard() {
                                         onClick={() => {
                                             setShowCopyDialog(false);
                                             setCopySubjects([]);
+                                            setSelectedCopySubjects([]);
                                         }}
                                         className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
                                     >
@@ -1009,7 +1038,7 @@ export default function Dashboard() {
                                             <div>
                                                 <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>From Year</label>
                                                 <select
-                                                                                                    value={copyFromYear}
+                                                    value={copyFromYear}
                                                     onChange={(e) => setCopyFromYear(Number(e.target.value))}
                                                     className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
                                                 >
@@ -1088,23 +1117,45 @@ export default function Dashboard() {
 
                                 {copySubjects.length > 0 && (
                                     <div className="mt-6">
-                                        <h3 className={`font-medium mb-2 ${textColor}`}>Subjects to be copied ({copySubjects.length})</h3>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h3 className={`font-medium ${textColor}`}>
+                                                Subjects to be copied ({selectedCopySubjects.length > 0 ? `${selectedCopySubjects.length} selected` : `${copySubjects.length} total`})
+                                            </h3>
+                                            <button
+                                                onClick={toggleSelectAllCopySubjects}
+                                                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                            >
+                                                {selectedCopySubjects.length === copySubjects.length ? 'Deselect All' : 'Select All'}
+                                            </button>
+                                        </div>
                                         <div className={`max-h-60 overflow-y-auto ${borderColor} border rounded-md p-2`}>
                                             {copySubjects.map((subject, index) => (
                                                 <div
                                                     key={index}
-                                                    className={`p-2 mb-2 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}
+                                                    className={`
+                  p-2 mb-2 rounded flex items-start
+                  ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}
+                  ${selectedCopySubjects.includes(subject.id) ? (theme === 'dark' ? 'ring-1 ring-indigo-500' : 'ring-1 ring-indigo-300') : ''}
+                `}
                                                 >
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
-                                                            <span className="font-medium">{subject.name}</span>
-                                                            <span className={`text-xs block ${secondaryText}`}>
-                                                                {subject.code} (Sem {subject.semester})
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedCopySubjects.includes(subject.id)}
+                                                        onChange={() => toggleCopySubjectSelection(subject.id)}
+                                                        className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                                    />
+                                                    <div className="ml-2 flex-1">
+                                                        <div className="flex justify-between items-center">
+                                                            <div>
+                                                                <span className="font-medium">{subject.name}</span>
+                                                                <span className={`text-xs block ${secondaryText}`}>
+                                                                    {subject.code} (Sem {subject.semester})
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-sm">
+                                                                {subject.modules.length} modules
                                                             </span>
                                                         </div>
-                                                        <span className="text-sm">
-                                                            {subject.modules.length} modules
-                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1117,6 +1168,7 @@ export default function Dashboard() {
                                         onClick={() => {
                                             setShowCopyDialog(false);
                                             setCopySubjects([]);
+                                            setSelectedCopySubjects([]);
                                         }}
                                         className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
                                     >
@@ -1124,10 +1176,14 @@ export default function Dashboard() {
                                     </button>
                                     <button
                                         onClick={copySubjectsToBranch}
-                                        disabled={!copyToBranch || !copyToYear || copySubjects.length === 0 || isCopying}
+                                        disabled={!copyToBranch || !copyToYear || (selectedCopySubjects.length === 0 && copySubjects.length === 0) || isCopying}
                                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        {isCopying ? 'Copying...' : 'Copy Subjects'}
+                                        {isCopying
+                                            ? 'Copying...'
+                                            : selectedCopySubjects.length > 0
+                                                ? `Copy ${selectedCopySubjects.length} Selected`
+                                                : 'Copy All Subjects'}
                                     </button>
                                 </div>
                             </div>

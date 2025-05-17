@@ -7,7 +7,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 
 export const AuthContext = createContext();
@@ -22,7 +24,8 @@ export function AuthProvider({ children }) {
         setUser({
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName
+          displayName: user.displayName,
+          photoURL: user.photoURL
         });
       } else {
         setUser(null);
@@ -33,7 +36,7 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  // Auth functions
+  // Email/password functions
   const signup = (email, password) => {
     return createUserWithEmailAndPassword(auth, email, password);
   };
@@ -50,6 +53,17 @@ export function AuthProvider({ children }) {
     return sendPasswordResetEmail(auth, email);
   };
 
+  // Google Sign-In function
+  const googleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -57,7 +71,8 @@ export function AuthProvider({ children }) {
       signup, 
       login, 
       logout, 
-      resetPassword 
+      resetPassword,
+      googleSignIn // Make sure this is included
     }}>
       {children}
     </AuthContext.Provider>
