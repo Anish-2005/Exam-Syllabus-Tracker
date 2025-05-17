@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
-import { Moon, Sun, Plus, Trash2, Edit, Save, X } from 'lucide-react'
+import { Moon, Sun, Plus, Trash2, Edit, Save, X, Copy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
+
 export default function Dashboard() {
     const { user, logout } = useAuth();
     const [loading, setLoading] = useState(true);
@@ -21,7 +22,6 @@ export default function Dashboard() {
     const [userProgress, setUserProgress] = useState({});
     const { theme, toggleTheme, isDark } = useTheme();
     const [selectedModuleIndex, setSelectedModuleIndex] = useState(null);
-    // Admin state
     const [isAdmin, setIsAdmin] = useState(false);
     const [branches, setBranches] = useState([]);
     const [years, setYears] = useState([]);
@@ -46,13 +46,19 @@ export default function Dashboard() {
     const [editingSubject, setEditingSubject] = useState(null);
     const [editingModuleIndex, setEditingModuleIndex] = useState(null);
     const [isEditingModule, setIsEditingModule] = useState(false);
+    const [showCopyDialog, setShowCopyDialog] = useState(false);
+    const [copyFromBranch, setCopyFromBranch] = useState('');
+    const [copyFromYear, setCopyFromYear] = useState(1);
+    const [copyFromSemester, setCopyFromSemester] = useState(null);
+    const [copyToBranch, setCopyToBranch] = useState('');
+    const [copyToYear, setCopyToYear] = useState(1);
+    const [copyToSemester, setCopyToSemester] = useState(null);
+    const [copySubjects, setCopySubjects] = useState([]);
+    const [isCopying, setIsCopying] = useState(false);
 
-    // Get available semesters based on selected year
-    // Get available semesters based on selected year
     const getAvailableSemesters = () => {
         if (!selectedYear) return [];
 
-        // Year to semester mapping
         const yearToSemesters = {
             1: [1, 2],
             2: [3, 4],
@@ -62,7 +68,7 @@ export default function Dashboard() {
 
         return yearToSemesters[selectedYear] || [];
     };
-    // Load user progress when subject is selected
+
     useEffect(() => {
         const loadUserProgress = async () => {
             if (!user || !selectedSubject) return;
@@ -84,20 +90,17 @@ export default function Dashboard() {
         loadUserProgress();
     }, [user, selectedSubject]);
 
-    // Edit Subject function
-    // Edit Subject function
     const editSubject = (subject) => {
         setEditingSubject(subject);
         setNewSubject({
             name: subject.name,
             code: subject.code,
             modules: [...subject.modules],
-            semester: subject.semester // Add this line
+            semester: subject.semester
         });
         setShowAddSubject(true);
     };
 
-    // Edit Module function
     const editModule = (index) => {
         setEditingModuleIndex(index);
         setIsEditingModule(true);
@@ -107,7 +110,6 @@ export default function Dashboard() {
         });
     };
 
-    // Save module edit
     const saveModuleEdit = async () => {
         if (editingModuleIndex === null || !newModule.name.trim()) return;
 
@@ -134,20 +136,17 @@ export default function Dashboard() {
         }
     };
 
-    // Check if user is admin on load
     useEffect(() => {
         if (user && user.email === "anishseth0510@gmail.com") {
             setIsAdmin(true);
         }
     }, [user]);
 
-    // Fetch configuration data (branches, years, specializations)
     useEffect(() => {
         const fetchConfig = async () => {
             try {
                 setLoading(true);
 
-                // Fetch branches
                 const branchesSnapshot = await getDocs(collection(db, 'branches'));
                 const branchesData = [];
                 branchesSnapshot.forEach((doc) => {
@@ -160,7 +159,6 @@ export default function Dashboard() {
                     setSelectedBranch(branchesData[0]);
                 }
 
-                // Fetch years
                 const yearsSnapshot = await getDocs(collection(db, 'years'));
                 const yearsData = [];
                 yearsSnapshot.forEach((doc) => {
@@ -171,7 +169,6 @@ export default function Dashboard() {
                 });
                 setYears(yearsData.sort((a, b) => a - b));
 
-                // Fetch specializations
                 const specsSnapshot = await getDocs(collection(db, 'specializations'));
                 const specsData = {};
                 specsSnapshot.forEach(doc => {
@@ -189,7 +186,6 @@ export default function Dashboard() {
         if (user) fetchConfig();
     }, [user]);
 
-    // Fetch syllabus data when branch/year/semester changes
     useEffect(() => {
         const fetchSyllabusData = async () => {
             try {
@@ -228,14 +224,12 @@ export default function Dashboard() {
         if (user && selectedBranch && selectedYear) fetchSyllabusData();
     }, [user, selectedBranch, selectedYear, selectedSemester]);
 
-    // Load modules when subject is selected
     useEffect(() => {
         if (selectedSubject) {
             setModules(selectedSubject.modules || []);
         }
     }, [selectedSubject]);
 
-    // Update module completion status (now user-specific)
     const updateModuleStatus = async (moduleIndex, completed) => {
         if (!user || !selectedSubject) return;
 
@@ -243,27 +237,21 @@ export default function Dashboard() {
             const progressRef = doc(db, 'userProgress', user.uid);
             const subjectProgressKey = `subject_${selectedSubject.id}`;
 
-            // Get current progress
             const progressDoc = await getDoc(progressRef);
             const currentProgress = progressDoc.exists() ? progressDoc.data() : {};
 
-            // Update the specific module's status
             const updatedModulesProgress = {
                 ...(currentProgress[subjectProgressKey] || {}),
                 [`module_${moduleIndex}`]: completed
             };
 
-            // Prepare the update
             const updateData = {
                 ...currentProgress,
                 [subjectProgressKey]: updatedModulesProgress,
                 updatedAt: serverTimestamp()
             };
 
-            // Update Firestore
             await setDoc(progressRef, updateData, { merge: true });
-
-            // Update local state
             setUserProgress(updateData);
 
         } catch (error) {
@@ -271,14 +259,12 @@ export default function Dashboard() {
         }
     };
 
-    // Check if a module is completed by the current user
     const isModuleCompleted = (subjectId, moduleIndex) => {
         if (!userProgress || !subjectId) return false;
         const subjectKey = `subject_${subjectId}`;
         return userProgress[subjectKey]?.[`module_${moduleIndex}`] === true;
     };
 
-    // Calculate progress for current user
     const calculateProgress = (subject) => {
         if (!subject?.modules || subject.modules.length === 0) return 0;
         if (!userProgress || !subject.id) return 0;
@@ -293,10 +279,8 @@ export default function Dashboard() {
         return Math.round((completedCount / subject.modules.length) * 100);
     };
 
-    // Add to your useEffect for user preferences
     useEffect(() => {
         if (user) {
-            // Load user preferences
             const userPrefRef = doc(db, 'userPreferences', user.uid);
             getDoc(userPrefRef).then((doc) => {
                 if (doc.exists()) {
@@ -309,7 +293,6 @@ export default function Dashboard() {
         }
     }, [user]);
 
-    // Function to save preferences
     const saveUserPreferences = async () => {
         if (!user) return;
         try {
@@ -324,14 +307,12 @@ export default function Dashboard() {
         }
     };
 
-    // Call this when branch/year/semester changes
     useEffect(() => {
         if (user && selectedBranch && selectedYear) {
             saveUserPreferences();
         }
     }, [selectedBranch, selectedYear, selectedSemester]);
 
-    // Admin functions
     const addBranch = async () => {
         if (!newBranch.trim()) return;
         try {
@@ -350,7 +331,6 @@ export default function Dashboard() {
 
     const deleteBranch = async (branch) => {
         try {
-            // Find and delete the branch document by name
             const q = query(collection(db, 'branches'), where('name', '==', branch));
             const querySnapshot = await getDocs(q);
 
@@ -358,7 +338,6 @@ export default function Dashboard() {
                 await deleteDoc(doc.ref);
             });
 
-            // Delete all subjects under this branch
             const subjectsQuery = query(collection(db, 'syllabus'), where('branch', '==', branch));
             const subjectsSnapshot = await getDocs(subjectsQuery);
             subjectsSnapshot.forEach(async (doc) => {
@@ -392,7 +371,6 @@ export default function Dashboard() {
 
     const deleteYear = async (year) => {
         try {
-            // Find and delete the year document by value
             const q = query(collection(db, 'years'), where('value', '==', year));
             const querySnapshot = await getDocs(q);
 
@@ -400,7 +378,6 @@ export default function Dashboard() {
                 await deleteDoc(doc.ref);
             });
 
-            // Delete all subjects under this year
             const subjectsQuery = query(collection(db, 'syllabus'), where('year', '==', year));
             const subjectsSnapshot = await getDocs(subjectsQuery);
             subjectsSnapshot.forEach(async (doc) => {
@@ -478,33 +455,31 @@ export default function Dashboard() {
         });
         setNewModule({ name: '', topics: '' });
     };
+
     const removeModule = (index) => {
         const updatedModules = [...newSubject.modules];
         updatedModules.splice(index, 1);
         setNewSubject({ ...newSubject, modules: updatedModules });
     };
+
     const submitSubject = async () => {
-        // Validate inputs
         if (!newSubject.name.trim() || !newSubject.code.trim()) {
             alert('Subject name and code are required');
             return;
         }
 
-        // Validate semester - different checks for new vs edited subjects
         const semester = editingSubject ? newSubject.semester : selectedSemester;
         if (!semester) {
             alert('Please select a semester');
             return;
         }
 
-        // Validate modules
         if (newSubject.modules.length === 0) {
             alert('Please add at least one module');
             return;
         }
 
         try {
-            // Prepare module data - ensure proper structure
             const modules = newSubject.modules.map(module => ({
                 name: module.name.trim(),
                 topics: Array.isArray(module.topics)
@@ -523,10 +498,8 @@ export default function Dashboard() {
             };
 
             if (editingSubject) {
-                // Update existing subject
                 await updateDoc(doc(db, 'syllabus', editingSubject.id), subjectData);
 
-                // Update local state
                 setSyllabusData(prev => prev.map(sub =>
                     sub.id === editingSubject.id ? { ...sub, ...subjectData } : sub
                 ));
@@ -535,17 +508,14 @@ export default function Dashboard() {
                     setSelectedSubject({ ...selectedSubject, ...subjectData });
                 }
             } else {
-                // Add new subject
                 const docRef = await addDoc(collection(db, 'syllabus'), {
                     ...subjectData,
                     createdAt: serverTimestamp()
                 });
 
-                // Update local state with new ID
                 setSyllabusData(prev => [...prev, { id: docRef.id, ...subjectData }]);
             }
 
-            // Reset form
             setShowAddSubject(false);
             setEditingSubject(null);
             setNewSubject({
@@ -564,6 +534,7 @@ export default function Dashboard() {
             alert('Failed to save subject. Please try again.');
         }
     };
+
     const deleteSubject = async (subjectId) => {
         try {
             await deleteDoc(doc(db, 'syllabus', subjectId));
@@ -576,7 +547,95 @@ export default function Dashboard() {
         }
     };
 
-    // Theme-based classes
+    const fetchSubjectsForCopy = async () => {
+        if (!copyFromBranch || !copyFromYear) return;
+
+        try {
+            setLoading(true);
+            let q;
+            if (copyFromSemester) {
+                q = query(
+                    collection(db, 'syllabus'),
+                    where('branch', '==', copyFromBranch),
+                    where('year', '==', copyFromYear),
+                    where('semester', '==', copyFromSemester)
+                );
+            } else {
+                q = query(
+                    collection(db, 'syllabus'),
+                    where('branch', '==', copyFromBranch),
+                    where('year', '==', copyFromYear)
+                );
+            }
+
+            const querySnapshot = await getDocs(q);
+            const data = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setCopySubjects(data);
+        } catch (error) {
+            console.error('Error fetching subjects for copy:', error);
+            alert('Failed to fetch subjects for copying');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const copySubjectsToBranch = async () => {
+        if (!copyToBranch || !copyToYear || copySubjects.length === 0) {
+            alert('Please select target branch and year and ensure there are subjects to copy');
+            return;
+        }
+
+        try {
+            setIsCopying(true);
+            const batch = [];
+
+            for (const subject of copySubjects) {
+                const newSubjectData = {
+                    name: subject.name,
+                    code: subject.code,
+                    modules: subject.modules,
+                    branch: copyToBranch,
+                    year: copyToYear,
+                    semester: copyToSemester || subject.semester,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, 'syllabus'), newSubjectData);
+            }
+
+            alert('Subjects copied successfully!');
+            setShowCopyDialog(false);
+            setCopyFromBranch('');
+            setCopyFromYear(1);
+            setCopyFromSemester(null);
+            setCopyToBranch('');
+            setCopyToYear(1);
+            setCopyToSemester(null);
+            setCopySubjects([]);
+
+            const q = query(
+                collection(db, 'syllabus'),
+                where('branch', '==', selectedBranch),
+                where('year', '==', selectedYear)
+            );
+            const querySnapshot = await getDocs(q);
+            const data = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setSyllabusData(data);
+        } catch (error) {
+            console.error('Error copying subjects:', error);
+            alert('Failed to copy subjects');
+        } finally {
+            setIsCopying(false);
+        }
+    };
+
     const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
     const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
     const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900';
@@ -587,11 +646,9 @@ export default function Dashboard() {
     return (
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
-                {/* Navigation */}
                 <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20 flex-wrap gap-y-2">
-                            {/* Left side - Logo/Branding */}
                             <div className="flex items-center space-x-2 min-w-0">
                                 <Image
                                     src="/emblem.png"
@@ -613,16 +670,13 @@ export default function Dashboard() {
                                 )}
                             </div>
 
-                            {/* Right side - User info and actions */}
                             <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-6 min-w-0">
-                                {/* User email - hidden on very small screens */}
                                 <span
                                     className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px]`}
                                 >
                                     {user?.email}
                                 </span>
 
-                                {/* Logout button */}
                                 <button
                                     onClick={logout}
                                     className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm md:text-base shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 whitespace-nowrap"
@@ -630,15 +684,14 @@ export default function Dashboard() {
                                     Logout
                                 </button>
 
-                                {/* Theme toggle button */}
                                 <button
                                     onClick={toggleTheme}
                                     className={`
-            p-2 rounded-full transition-all duration-300
-            ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-            shadow-md hover:shadow-lg
-            focus:outline-none focus:ring-2 focus:ring-offset-2 ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}
-          `}
+                                        p-2 rounded-full transition-all duration-300
+                                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
+                                        shadow-md hover:shadow-lg
+                                        focus:outline-none focus:ring-2 focus:ring-offset-2 ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}
+                                    `}
                                     aria-label="Toggle Theme"
                                 >
                                     <AnimatePresence mode="wait" initial={false}>
@@ -672,13 +725,9 @@ export default function Dashboard() {
                     </div>
                 </nav>
 
-
-                {/* Main Content */}
                 <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
-                    {/* Branch/Year/Semester Selector */}
                     <div className={`${cardBg} p-4 rounded-lg shadow mb-6 ${borderColor} border`}>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            {/* Branch Selector */}
                             <div>
                                 <div className="flex items-center justify-between mb-1">
                                     <label className={`block text-sm font-medium ${secondaryText}`}>Branch</label>
@@ -714,22 +763,19 @@ export default function Dashboard() {
                                                     <div
                                                         key={branch}
                                                         className={`
-                            flex justify-between items-center p-2 rounded
-                            ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                            transition-colors duration-200
-                          `}
+                                                            flex justify-between items-center p-2 rounded
+                                                            ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
+                                                            transition-colors duration-200
+                                                        `}
                                                     >
                                                         <span className="text-sm">{branch}</span>
                                                         <button
                                                             onClick={() => deleteBranch(branch)}
                                                             className={`
-                              p-1 rounded-full 
-                              ${theme === 'dark' ?
-                                                                    'text-red-400 hover:text-red-300 hover:bg-gray-600' :
-                                                                    'text-red-600 hover:text-red-800 hover:bg-gray-200'
-                                                                }
-                              transition-colors duration-200
-                            `}
+                                                                p-1 rounded-full 
+                                                                ${theme === 'dark' ? 'text-red-400 hover:text-red-300 hover:bg-gray-600' : 'text-red-600 hover:text-red-800 hover:bg-gray-200'}
+                                                                transition-colors duration-200
+                                                            `}
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -759,7 +805,6 @@ export default function Dashboard() {
                                 )}
                             </div>
 
-                            {/* Year Selector */}
                             <div>
                                 <div className="flex items-center justify-between mb-1">
                                     <label className={`block text-sm font-medium ${secondaryText}`}>Year</label>
@@ -795,20 +840,17 @@ export default function Dashboard() {
                                                     <div
                                                         key={year}
                                                         className={`
-                            flex justify-between items-center p-2 rounded
-                            ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                          `}
+                                                            flex justify-between items-center p-2 rounded
+                                                            ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
+                                                        `}
                                                     >
                                                         <span className="text-sm">Year {year}</span>
                                                         <button
                                                             onClick={() => deleteYear(year)}
                                                             className={`
-                              p-1 rounded-full 
-                              ${theme === 'dark' ?
-                                                                    'text-red-400 hover:text-red-300 hover:bg-gray-600' :
-                                                                    'text-red-600 hover:text-red-800 hover:bg-gray-200'
-                                                                }
-                            `}
+                                                                p-1 rounded-full 
+                                                                ${theme === 'dark' ? 'text-red-400 hover:text-red-300 hover:bg-gray-600' : 'text-red-600 hover:text-red-800 hover:bg-gray-200'}
+                                                            `}
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -839,7 +881,6 @@ export default function Dashboard() {
                                 )}
                             </div>
 
-                            {/* Semester Selector */}
                             <div>
                                 <div className="flex items-center justify-between mb-1">
                                     <label className={`block text-sm font-medium ${secondaryText}`}>Semester</label>
@@ -888,7 +929,6 @@ export default function Dashboard() {
                                 )}
                             </div>
 
-                            {/* Specialization Selector */}
                             {specializations[selectedBranch] && (
                                 <div>
                                     <div className="flex items-center justify-between mb-1">
@@ -919,7 +959,180 @@ export default function Dashboard() {
                                 </div>
                             )}
                         </div>
+
+                        {isAdmin && (
+                            <div className="mt-4 flex justify-end">
+                                <button
+                                    onClick={() => setShowCopyDialog(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+                                >
+                                    <Copy size={16} />
+                                    <span>Copy Subjects</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
+
+                    {showCopyDialog && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div className={`${cardBg} rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto ${borderColor} border`}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className={`text-xl font-bold ${textColor}`}>Copy Subjects Between Branches</h2>
+                                    <button
+                                        onClick={() => {
+                                            setShowCopyDialog(false);
+                                            setCopySubjects([]);
+                                        }}
+                                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h3 className={`font-medium mb-3 ${textColor}`}>Source</h3>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>From Branch</label>
+                                                <select
+                                                    value={copyFromBranch}
+                                                    onChange={(e) => setCopyFromBranch(e.target.value)}
+                                                    className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                                >
+                                                    <option value="">Select Branch</option>
+                                                    {branches.map(branch => (
+                                                        <option key={branch} value={branch}>{branch}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>From Year</label>
+                                                <select
+                                                                                                    value={copyFromYear}
+                                                    onChange={(e) => setCopyFromYear(Number(e.target.value))}
+                                                    className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                                >
+                                                    {years.map(year => (
+                                                        <option key={year} value={year}>Year {year}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>From Semester (Optional)</label>
+                                                <select
+                                                    value={copyFromSemester || ''}
+                                                    onChange={(e) => setCopyFromSemester(e.target.value ? Number(e.target.value) : null)}
+                                                    className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                                >
+                                                    <option value="">All Semesters</option>
+                                                    {copyFromYear && getAvailableSemesters().map(semester => (
+                                                        <option key={semester} value={semester}>Semester {semester}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <button
+                                                onClick={fetchSubjectsForCopy}
+                                                disabled={!copyFromBranch || !copyFromYear}
+                                                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            >
+                                                {loading ? 'Loading...' : 'Load Subjects'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 className={`font-medium mb-3 ${textColor}`}>Destination</h3>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>To Branch</label>
+                                                <select
+                                                    value={copyToBranch}
+                                                    onChange={(e) => setCopyToBranch(e.target.value)}
+                                                    className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                                >
+                                                    <option value="">Select Branch</option>
+                                                    {branches.map(branch => (
+                                                        <option key={branch} value={branch}>{branch}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>To Year</label>
+                                                <select
+                                                    value={copyToYear}
+                                                    onChange={(e) => setCopyToYear(Number(e.target.value))}
+                                                    className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                                >
+                                                    {years.map(year => (
+                                                        <option key={year} value={year}>Year {year}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>To Semester (Optional)</label>
+                                                <select
+                                                    value={copyToSemester || ''}
+                                                    onChange={(e) => setCopyToSemester(e.target.value ? Number(e.target.value) : null)}
+                                                    className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                                >
+                                                    <option value="">Same as source</option>
+                                                    {copyToYear && getAvailableSemesters().map(semester => (
+                                                        <option key={semester} value={semester}>Semester {semester}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {copySubjects.length > 0 && (
+                                    <div className="mt-6">
+                                        <h3 className={`font-medium mb-2 ${textColor}`}>Subjects to be copied ({copySubjects.length})</h3>
+                                        <div className={`max-h-60 overflow-y-auto ${borderColor} border rounded-md p-2`}>
+                                            {copySubjects.map((subject, index) => (
+                                                <div
+                                                    key={index}
+                                                    className={`p-2 mb-2 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <span className="font-medium">{subject.name}</span>
+                                                            <span className={`text-xs block ${secondaryText}`}>
+                                                                {subject.code} (Sem {subject.semester})
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-sm">
+                                                            {subject.modules.length} modules
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-6 flex justify-end gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setShowCopyDialog(false);
+                                            setCopySubjects([]);
+                                        }}
+                                        className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={copySubjectsToBranch}
+                                        disabled={!copyToBranch || !copyToYear || copySubjects.length === 0 || isCopying}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    >
+                                        {isCopying ? 'Copying...' : 'Copy Subjects'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Two-column layout */}
                     <div className="flex flex-col lg:flex-row gap-6">
@@ -1024,9 +1237,9 @@ export default function Dashboard() {
                                                         <div
                                                             key={index}
                                                             className={`
-                flex justify-between items-center p-2 rounded
-                ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'}
-              `}
+                                                                flex justify-between items-center p-2 rounded
+                                                                ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'}
+                                                            `}
                                                         >
                                                             <div>
                                                                 <span className="font-medium">{module.name}</span>
@@ -1087,14 +1300,14 @@ export default function Dashboard() {
                                                 <div
                                                     key={subject.id}
                                                     className={`
-          p-3 rounded-lg cursor-pointer transition-colors duration-200
-          ${selectedSubject?.id === subject.id
-                                                            ? 'bg-blue-50 border border-blue-200 dark:bg-indigo-500 dark:border-indigo-700' // Light blue for light mode, indigo for dark
+                                                        p-3 rounded-lg cursor-pointer transition-colors duration-200
+                                                        ${selectedSubject?.id === subject.id
+                                                            ? 'bg-blue-50 border border-blue-200 dark:bg-indigo-500 dark:border-indigo-700'
                                                             : `${theme === 'dark'
                                                                 ? 'bg-gray-700 hover:bg-gray-600'
                                                                 : 'bg-gray-50 hover:bg-gray-100'}`
                                                         }
-        `}
+                                                    `}
                                                     onClick={() => setSelectedSubject(subject)}
                                                 >
                                                     <div className="flex justify-between items-center">
@@ -1252,17 +1465,17 @@ export default function Dashboard() {
                                                 <motion.div
                                                     key={index}
                                                     className={`
-          flex items-start p-3 rounded-lg border
-          ${isModuleCompleted(selectedSubject.id, index)
+                                                        flex items-start p-3 rounded-lg border
+                                                        ${isModuleCompleted(selectedSubject.id, index)
                                                             ? (theme === 'dark' ? 'bg-green-900/30 border-green-700' : 'bg-green-100 border-green-200')
                                                             : (theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
                                                         }
-          ${selectedModuleIndex === index
+                                                        ${selectedModuleIndex === index
                                                             ? (theme === 'dark' ? 'ring-2 ring-indigo-500' : 'ring-2 ring-indigo-300')
                                                             : ''
                                                         }
-          transition-colors duration-200
-        `}
+                                                        transition-colors duration-200
+                                                    `}
                                                 >
                                                     {/* Checkbox Button */}
                                                     <button
@@ -1271,14 +1484,14 @@ export default function Dashboard() {
                                                             await updateModuleStatus(index, !isModuleCompleted(selectedSubject.id, index));
                                                         }}
                                                         className={`
-            mt-1 flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center
-            ${isModuleCompleted(selectedSubject.id, index)
+                                                            mt-1 flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center
+                                                            ${isModuleCompleted(selectedSubject.id, index)
                                                                 ? 'bg-indigo-600 border-indigo-600'
                                                                 : `${theme === 'dark' ? 'border-gray-500' : 'border-gray-300'} bg-transparent`
                                                             }
-            transition-colors duration-200
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-          `}
+                                                            transition-colors duration-200
+                                                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                                                        `}
                                                         aria-label={isModuleCompleted(selectedSubject.id, index) ? "Mark as incomplete" : "Mark as complete"}
                                                         role="checkbox"
                                                         aria-checked={isModuleCompleted(selectedSubject.id, index)}
@@ -1309,9 +1522,9 @@ export default function Dashboard() {
                                                                             editModule(index);
                                                                         }}
                                                                         className={`
-                    p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600
-                    text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300
-                  `}
+                                                                            p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600
+                                                                            text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300
+                                                                        `}
                                                                     >
                                                                         <Edit size={14} />
                                                                     </button>
@@ -1331,9 +1544,9 @@ export default function Dashboard() {
                                                                             });
                                                                         }}
                                                                         className={`
-                    p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600
-                    text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300
-                  `}
+                                                                            p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600
+                                                                            text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300
+                                                                        `}
                                                                     >
                                                                         <Trash2 size={14} />
                                                                     </button>
