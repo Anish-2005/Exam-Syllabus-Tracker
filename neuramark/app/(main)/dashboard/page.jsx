@@ -6,9 +6,11 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
-import { Moon, Sun, Plus, Trash2, Edit, Save, X, Copy } from 'lucide-react'
+import { Moon, Sun, Plus, Trash2, Edit, Save, X, Copy,Activity } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Dashboard() {
     const { user, logout } = useAuth();
@@ -29,6 +31,8 @@ export default function Dashboard() {
     const [selectedCopySubjects, setSelectedCopySubjects] = useState([]);
     const [specializations, setSpecializations] = useState({});
     const [showAddSubject, setShowAddSubject] = useState(false);
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [newSubject, setNewSubject] = useState({
         name: '',
         code: '',
@@ -69,6 +73,22 @@ export default function Dashboard() {
 
         return yearToSemesters[selectedYear] || [];
     };
+    useEffect(() => {
+        const subjectId = searchParams.get('subject');
+        if (subjectId && syllabusData.length > 0) {
+            const subject = syllabusData.find(sub => sub.id === subjectId);
+            if (subject) {
+                setSelectedSubject(subject);
+                // Scroll to the subject details section
+                setTimeout(() => {
+                    const element = document.getElementById('subject-details');
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        }
+    }, [searchParams, syllabusData]);
 
     useEffect(() => {
         const loadUserProgress = async () => {
@@ -543,17 +563,21 @@ export default function Dashboard() {
     };
 
     const deleteSubject = async (subjectId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this subject? This action cannot be undone.");
+        if (!confirmDelete) return;
+
         try {
             await deleteDoc(doc(db, 'syllabus', subjectId));
             setSyllabusData(syllabusData.filter(sub => sub.id !== subjectId));
             if (selectedSubject?.id === subjectId) {
                 setSelectedSubject(null);
             }
+            alert('Subject deleted successfully');
         } catch (error) {
             console.error('Error deleting subject:', error);
+            alert('Failed to delete subject');
         }
     };
-
     const fetchSubjectsForCopy = async () => {
         if (!copyFromBranch || !copyFromYear) return;
 
@@ -989,15 +1013,28 @@ export default function Dashboard() {
                         </div>
 
                         {isAdmin && (
-                            <div className="mt-4 flex justify-end">
-                                <button
-                                    onClick={() => setShowCopyDialog(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
-                                >
-                                    <Copy size={16} />
-                                    <span>Copy Subjects</span>
-                                </button>
-                            </div>
+                             <div className="mt-4 flex justify-end gap-4">
+        <Link 
+            href="/admin/subjects"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+        >
+            <span>All Subjects</span>
+        </Link>
+        <Link 
+            href="/admin/active-users"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+        >
+            <Activity size={16} />
+            <span>Active Users</span>
+        </Link>
+        <button
+            onClick={() => setShowCopyDialog(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+        >
+            <Copy size={16} />
+            <span>Copy Subjects</span>
+        </button>
+    </div>
                         )}
                     </div>
 
@@ -1410,7 +1447,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Modules and Progress */}
-                        <div className="lg:w-2/3">
+                        <div className="lg:w-2/3" id="subject-details">
                             {selectedSubject ? (
                                 <div className={`${cardBg} p-6 rounded-lg shadow ${borderColor} border`}>
                                     <div className="flex justify-between items-start mb-2">
@@ -1587,6 +1624,9 @@ export default function Dashboard() {
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
+                                                                            const confirmDelete = window.confirm("Are you sure you want to delete this module? This action cannot be undone.");
+                                                                            if (!confirmDelete) return;
+
                                                                             const updatedModules = [...modules];
                                                                             updatedModules.splice(index, 1);
 
@@ -1600,9 +1640,9 @@ export default function Dashboard() {
                                                                             });
                                                                         }}
                                                                         className={`
-                                                                            p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600
-                                                                            text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300
-                                                                        `}
+        p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600
+        text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300
+    `}
                                                                     >
                                                                         <Trash2 size={14} />
                                                                     </button>
