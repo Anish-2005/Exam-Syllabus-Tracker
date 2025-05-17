@@ -464,37 +464,61 @@ export default function Dashboard() {
 
     const addModule = () => {
         if (!newModule.name.trim()) return;
-        const topicsArray = newModule.topics.split(',').map(t => t.trim()).filter(t => t);
+
+        const topicsArray = newModule.topics
+            ? newModule.topics.split(',').map(t => t.trim()).filter(t => t)
+            : [];
+
         setNewSubject({
             ...newSubject,
             modules: [...newSubject.modules, {
-                name: newModule.name,
-                topics: topicsArray,
-                completed: false
+                name: newModule.name.trim(),
+                topics: topicsArray
             }]
         });
         setNewModule({ name: '', topics: '' });
     };
-
     const removeModule = (index) => {
         const updatedModules = [...newSubject.modules];
         updatedModules.splice(index, 1);
         setNewSubject({ ...newSubject, modules: updatedModules });
     };
     const submitSubject = async () => {
-        if (!newSubject.name.trim() || !newSubject.code.trim() ||
-            (editingSubject ? !newSubject.semester : !selectedSemester)) {
+        // Validate inputs
+        if (!newSubject.name.trim() || !newSubject.code.trim()) {
+            alert('Subject name and code are required');
+            return;
+        }
+
+        // Validate semester - different checks for new vs edited subjects
+        const semester = editingSubject ? newSubject.semester : selectedSemester;
+        if (!semester) {
+            alert('Please select a semester');
+            return;
+        }
+
+        // Validate modules
+        if (newSubject.modules.length === 0) {
+            alert('Please add at least one module');
             return;
         }
 
         try {
+            // Prepare module data - ensure proper structure
+            const modules = newSubject.modules.map(module => ({
+                name: module.name.trim(),
+                topics: Array.isArray(module.topics)
+                    ? module.topics
+                    : (module.topics || '').split(',').map(t => t.trim()).filter(t => t)
+            }));
+
             const subjectData = {
-                name: newSubject.name,
-                code: newSubject.code,
-                modules: newSubject.modules,
+                name: newSubject.name.trim(),
+                code: newSubject.code.trim(),
+                modules,
                 branch: selectedBranch,
                 year: selectedYear,
-                semester: editingSubject ? newSubject.semester : selectedSemester,
+                semester: semester,
                 updatedAt: serverTimestamp()
             };
 
@@ -512,35 +536,14 @@ export default function Dashboard() {
                 }
             } else {
                 // Add new subject
-                await addDoc(collection(db, 'syllabus'), {
+                const docRef = await addDoc(collection(db, 'syllabus'), {
                     ...subjectData,
                     createdAt: serverTimestamp()
                 });
-            }
 
-            // Refresh data
-            let q;
-            if (selectedSemester) {
-                q = query(
-                    collection(db, 'syllabus'),
-                    where('branch', '==', selectedBranch),
-                    where('year', '==', selectedYear),
-                    where('semester', '==', selectedSemester)
-                );
-            } else {
-                q = query(
-                    collection(db, 'syllabus'),
-                    where('branch', '==', selectedBranch),
-                    where('year', '==', selectedYear)
-                );
+                // Update local state with new ID
+                setSyllabusData(prev => [...prev, { id: docRef.id, ...subjectData }]);
             }
-
-            const querySnapshot = await getDocs(q);
-            const data = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setSyllabusData(data);
 
             // Reset form
             setShowAddSubject(false);
@@ -551,8 +554,14 @@ export default function Dashboard() {
                 modules: [],
                 semester: null
             });
+            setNewModule({
+                name: '',
+                topics: ''
+            });
+
         } catch (error) {
             console.error('Error saving subject:', error);
+            alert('Failed to save subject. Please try again.');
         }
     };
     const deleteSubject = async (subjectId) => {
@@ -965,7 +974,7 @@ export default function Dashboard() {
                                             <div>
                                                 <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>Semester</label>
                                                 <select
-                                                    value={editingSubject ? newSubject.semester : selectedSemester || ''}
+                                                    value={editingSubject ? newSubject.semester : (selectedSemester || '')}
                                                     onChange={(e) => {
                                                         const semester = e.target.value ? Number(e.target.value) : null;
                                                         if (editingSubject) {
