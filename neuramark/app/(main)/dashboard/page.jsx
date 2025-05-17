@@ -1045,7 +1045,7 @@ export default function Dashboard() {
                                                     className={`
           p-3 rounded-lg cursor-pointer transition-colors duration-200
           ${selectedSubject?.id === subject.id
-                                                            ? 'bg-blue-50 border border-blue-200 dark:bg-indigo-900 dark:border-indigo-700' // Light blue for light mode, indigo for dark
+                                                            ? 'bg-blue-50 border border-blue-200 dark:bg-indigo-500 dark:border-indigo-700' // Light blue for light mode, indigo for dark
                                                             : `${theme === 'dark'
                                                                 ? 'bg-gray-700 hover:bg-gray-600'
                                                                 : 'bg-gray-50 hover:bg-gray-100'}`
