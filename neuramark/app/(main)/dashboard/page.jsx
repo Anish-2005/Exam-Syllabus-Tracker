@@ -85,12 +85,14 @@ export default function Dashboard() {
     }, [user, selectedSubject]);
 
     // Edit Subject function
+    // Edit Subject function
     const editSubject = (subject) => {
         setEditingSubject(subject);
         setNewSubject({
             name: subject.name,
             code: subject.code,
-            modules: [...subject.modules]
+            modules: [...subject.modules],
+            semester: subject.semester // Add this line
         });
         setShowAddSubject(true);
     };
@@ -479,28 +481,40 @@ export default function Dashboard() {
         updatedModules.splice(index, 1);
         setNewSubject({ ...newSubject, modules: updatedModules });
     };
-
     const submitSubject = async () => {
-        if (!newSubject.name.trim() || !newSubject.code.trim()) return;
+        if (!newSubject.name.trim() || !newSubject.code.trim() ||
+            (editingSubject ? !newSubject.semester : !selectedSemester)) {
+            return;
+        }
+
         try {
+            const subjectData = {
+                name: newSubject.name,
+                code: newSubject.code,
+                modules: newSubject.modules,
+                branch: selectedBranch,
+                year: selectedYear,
+                semester: editingSubject ? newSubject.semester : selectedSemester,
+                updatedAt: serverTimestamp()
+            };
+
             if (editingSubject) {
                 // Update existing subject
-                await updateDoc(doc(db, 'syllabus', editingSubject.id), {
-                    ...newSubject,
-                    branch: selectedBranch,
-                    year: selectedYear,
-                    semester: selectedSemester,
-                    updatedAt: serverTimestamp()
-                });
+                await updateDoc(doc(db, 'syllabus', editingSubject.id), subjectData);
+
+                // Update local state
+                setSyllabusData(prev => prev.map(sub =>
+                    sub.id === editingSubject.id ? { ...sub, ...subjectData } : sub
+                ));
+
+                if (selectedSubject?.id === editingSubject.id) {
+                    setSelectedSubject({ ...selectedSubject, ...subjectData });
+                }
             } else {
                 // Add new subject
                 await addDoc(collection(db, 'syllabus'), {
-                    ...newSubject,
-                    branch: selectedBranch,
-                    year: selectedYear,
-                    semester: selectedSemester,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
+                    ...subjectData,
+                    createdAt: serverTimestamp()
                 });
             }
 
@@ -528,18 +542,19 @@ export default function Dashboard() {
             }));
             setSyllabusData(data);
 
+            // Reset form
             setShowAddSubject(false);
             setEditingSubject(null);
             setNewSubject({
                 name: '',
                 code: '',
-                modules: []
+                modules: [],
+                semester: null
             });
         } catch (error) {
             console.error('Error saving subject:', error);
         }
     };
-
     const deleteSubject = async (subjectId) => {
         try {
             await deleteDoc(doc(db, 'syllabus', subjectId));
@@ -950,11 +965,19 @@ export default function Dashboard() {
                                             <div>
                                                 <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>Semester</label>
                                                 <select
-                                                    value={selectedSemester || ''}
-                                                    onChange={(e) => setSelectedSemester(e.target.value ? Number(e.target.value) : null)}
+                                                    value={editingSubject ? newSubject.semester : selectedSemester || ''}
+                                                    onChange={(e) => {
+                                                        const semester = e.target.value ? Number(e.target.value) : null;
+                                                        if (editingSubject) {
+                                                            setNewSubject({ ...newSubject, semester });
+                                                        } else {
+                                                            setSelectedSemester(semester);
+                                                        }
+                                                    }}
                                                     className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
                                                     disabled={!selectedYear}
                                                 >
+                                                    <option value="">Select Semester</option>
                                                     {getAvailableSemesters().map(semester => (
                                                         <option key={semester} value={semester}>Semester {semester}</option>
                                                     ))}
@@ -973,6 +996,7 @@ export default function Dashboard() {
                                                     <button
                                                         onClick={addModule}
                                                         className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                                        disabled={!newModule.name.trim()}
                                                     >
                                                         <Plus size={16} />
                                                     </button>
@@ -991,13 +1015,13 @@ export default function Dashboard() {
                                                         <div
                                                             key={index}
                                                             className={`
-                              flex justify-between items-center p-2 rounded
-                              ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'}
-                            `}
+                flex justify-between items-center p-2 rounded
+                ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'}
+              `}
                                                         >
                                                             <div>
                                                                 <span className="font-medium">{module.name}</span>
-                                                                <span className="text-xs block">{module.topics.join(', ')}</span>
+                                                                <span className="text-xs block">{module.topics?.join(', ') || 'No topics'}</span>
                                                             </div>
                                                             <button
                                                                 onClick={() => removeModule(index)}
@@ -1014,6 +1038,15 @@ export default function Dashboard() {
                                                     onClick={() => {
                                                         setShowAddSubject(false);
                                                         setEditingSubject(null);
+                                                        setNewSubject({
+                                                            name: '',
+                                                            code: '',
+                                                            modules: []
+                                                        });
+                                                        setNewModule({
+                                                            name: '',
+                                                            topics: ''
+                                                        });
                                                     }}
                                                     className="px-3 py-1.5 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm"
                                                 >
@@ -1022,7 +1055,9 @@ export default function Dashboard() {
                                                 <button
                                                     onClick={submitSubject}
                                                     className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-                                                    disabled={!newSubject.name || !newSubject.code || !selectedSemester}
+                                                    disabled={!newSubject.name || !newSubject.code ||
+                                                        (editingSubject ? !newSubject.semester : !selectedSemester) ||
+                                                        newSubject.modules.length === 0}
                                                 >
                                                     {editingSubject ? 'Update Subject' : 'Save Subject'}
                                                 </button>
