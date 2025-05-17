@@ -697,8 +697,9 @@ export default function Dashboard() {
     const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900';
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        
         <ProtectedRoute>
+            <Suspense fallback={<div>Loading...</div>}>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
                 <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1672,7 +1673,8 @@ export default function Dashboard() {
                     </div>
                 </main>
             </div>
+             </Suspense>
         </ProtectedRoute>
-        </Suspense>
+       
     );
 }
