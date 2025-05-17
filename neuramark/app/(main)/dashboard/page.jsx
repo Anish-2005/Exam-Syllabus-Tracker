@@ -8,7 +8,7 @@ import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
 import { Moon, Sun, Plus, Trash2, Edit, Save, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-
+import Image from 'next/image'
 export default function Dashboard() {
     const { user, logout } = useAuth();
     const [loading, setLoading] = useState(true);
@@ -49,19 +49,19 @@ export default function Dashboard() {
 
     // Get available semesters based on selected year
     // Get available semesters based on selected year
-const getAvailableSemesters = () => {
-    if (!selectedYear) return [];
-    
-    // Year to semester mapping
-    const yearToSemesters = {
-        1: [1, 2],
-        2: [3, 4],
-        3: [5, 6],
-        4: [7, 8]
+    const getAvailableSemesters = () => {
+        if (!selectedYear) return [];
+
+        // Year to semester mapping
+        const yearToSemesters = {
+            1: [1, 2],
+            2: [3, 4],
+            3: [5, 6],
+            4: [7, 8]
+        };
+
+        return yearToSemesters[selectedYear] || [];
     };
-    
-    return yearToSemesters[selectedYear] || [];
-};
     // Load user progress when subject is selected
     useEffect(() => {
         const loadUserProgress = async () => {
@@ -108,7 +108,7 @@ const getAvailableSemesters = () => {
     // Save module edit
     const saveModuleEdit = async () => {
         if (editingModuleIndex === null || !newModule.name.trim()) return;
-        
+
         const topicsArray = newModule.topics.split(',').map(t => t.trim()).filter(t => t);
         const updatedModules = [...modules];
         updatedModules[editingModuleIndex] = {
@@ -520,7 +520,7 @@ const getAvailableSemesters = () => {
                     where('year', '==', selectedYear)
                 );
             }
-            
+
             const querySnapshot = await getDocs(q);
             const data = querySnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -566,12 +566,22 @@ const getAvailableSemesters = () => {
                 {/* Navigation */}
                 <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16 md:h-20">
+                        <div className="flex justify-between items-center h-16 md:h-20 flex-wrap gap-y-2">
                             {/* Left side - Logo/Branding */}
-                            <div className="flex items-center space-x-2">
-                                <h1 className={`text-xl md:text-2xl font-bold ${textColor} tracking-tight`}>
+                            <div className="flex items-center space-x-2 min-w-0">
+                                <Image
+                                    src="/emblem.png"
+                                    alt="NeuraMark Logo"
+                                    width={36}
+                                    height={36}
+                                    className="rounded-sm shadow-sm shrink-0"
+                                    priority
+                                />
+
+                                <h1 className={`text-lg sm:text-2xl md:text-2xl font-bold ${textColor} tracking-tight truncate`}>
                                     NeuraMark
                                 </h1>
+
                                 {isAdmin && (
                                     <span className="ml-2 px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs md:text-sm rounded-full shadow-sm">
                                         ADMIN
@@ -580,26 +590,27 @@ const getAvailableSemesters = () => {
                             </div>
 
                             {/* Right side - User info and actions */}
-                            <div className="flex items-center space-x-3 md:space-x-6">
-                                {/* User email - hidden on small screens */}
-                                <span className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[120px] md:max-w-[200px]`}>
+                            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-6 min-w-0">
+                                {/* User email - hidden on very small screens */}
+                                <span
+                                    className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px]`}
+                                >
                                     {user?.email}
                                 </span>
 
                                 {/* Logout button */}
                                 <button
                                     onClick={logout}
-                                    className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm md:text-base shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
+                                    className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm md:text-base shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 whitespace-nowrap"
                                 >
                                     Logout
                                 </button>
 
-                                {/* Theme toggle */}
+                                {/* Theme toggle button */}
                                 <button
                                     onClick={toggleTheme}
                                     className={`
-            p-2 rounded-full
-            transition-all duration-300
+            p-2 rounded-full transition-all duration-300
             ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
             shadow-md hover:shadow-lg
             focus:outline-none focus:ring-2 focus:ring-offset-2 ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}
@@ -636,6 +647,7 @@ const getAvailableSemesters = () => {
                         </div>
                     </div>
                 </nav>
+
 
                 {/* Main Content */}
                 <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
@@ -892,7 +904,7 @@ const getAvailableSemesters = () => {
                             <div className={`${cardBg} p-6 rounded-lg shadow ${borderColor} border`}>
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className={`text-xl font-bold ${textColor}`}>
-                                        {selectedBranch} Year {selectedYear} 
+                                        {selectedBranch} Year {selectedYear}
                                         {selectedSemester ? ` Semester ${selectedSemester}` : ' All Semesters'} Subjects
                                     </h2>
                                     {isAdmin && (
