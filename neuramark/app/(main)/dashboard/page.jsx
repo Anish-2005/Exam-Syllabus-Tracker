@@ -1,5 +1,6 @@
 // app/dashboard/page.js
 'use client'
+import { Suspense } from 'react';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../components/context/AuthContext';
 import { useEffect, useState } from 'react';
@@ -696,6 +697,7 @@ export default function Dashboard() {
     const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900';
 
     return (
+        <Suspense fallback={<div>Loading...</div>}>
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
                 <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
@@ -1671,5 +1673,6 @@ export default function Dashboard() {
                 </main>
             </div>
         </ProtectedRoute>
+        </Suspense>
     );
 }
