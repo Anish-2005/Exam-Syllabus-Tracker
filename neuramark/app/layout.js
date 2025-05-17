@@ -7,7 +7,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Exam Syllabus Tracker',
+  title: 'NeuraMark',
   description: 'Track your syllabus progress',
 };
 
