@@ -1,6 +1,7 @@
 // app/dashboard/page.js
 'use client'
 import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../components/context/AuthContext';
 import { useEffect, useState } from 'react';
