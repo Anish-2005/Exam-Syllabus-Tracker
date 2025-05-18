@@ -1,6 +1,6 @@
 // app/(auth)/signup/page.js
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../components/context/AuthContext';
 import { useTheme } from '../../components/ThemeContext';
@@ -9,6 +9,8 @@ import { Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import NameCollectionModal from '../../components/NameCollectionModal';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/app/components/lib/firebase';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -17,13 +19,28 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
-  const { signup, googleSignIn, currentUser } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { signup, googleSignIn, needsProfile, user, userProfile } = useAuth();
+
+  // Check if user exists in Firestore by email
+  const checkUserExists = async (email) => {
+    const usersRef = doc(db, 'users', email); // Assuming email is the document ID
+    const userDoc = await getDoc(usersRef);
+    return userDoc.exists();
+  };
+
+  useEffect(() => {
+    if (user && !needsProfile && userProfile) {
+      router.push('/dashboard');
+    } else if (user && needsProfile) {
+      setShowNameModal(true);
+    }
+  }, [user, needsProfile, userProfile, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       return setError('Passwords do not match');
     }
@@ -31,10 +48,16 @@ export default function SignupPage() {
     try {
       setError('');
       setLoading(true);
-      // Sign up and automatically log in the user
+      
+      // First check if user exists in Firestore
+      const userExists = await checkUserExists(email);
+      if (userExists) {
+        setLoading(false);
+        return setError('An account with this email already exists. Please sign in instead.');
+      }
+
+      // If user doesn't exist, proceed with signup
       await signup(email, password);
-      // Redirect to dashboard after successful signup/login
-      router.push('/dashboard');
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -46,7 +69,6 @@ export default function SignupPage() {
       setError('');
       setLoading(true);
       await googleSignIn();
-      // Google sign-in will handle redirection in AuthContext
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -116,7 +138,7 @@ export default function SignupPage() {
         <h2 className={`text-center text-3xl font-extrabold ${textColor}`}>
           Create a new account
         </h2>
-        
+
         {error && (
           <div className={`${errorBg} border px-4 py-3 rounded ${textColor}`}>
             {error}
@@ -209,7 +231,7 @@ export default function SignupPage() {
 
       {/* Name Collection Modal - Will be shown if needed by AuthContext */}
       {showNameModal && (
-        <NameCollectionModal 
+        <NameCollectionModal
           onComplete={handleNameComplete}
           onClose={() => {
             setShowNameModal(false);
