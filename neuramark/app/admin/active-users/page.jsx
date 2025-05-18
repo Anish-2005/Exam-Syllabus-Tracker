@@ -5,10 +5,11 @@ import { useAuth } from '@/app/components/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useTheme } from '@/app/components/ThemeContext';
-import { RefreshCw,ArrowLeft, User, Mail, Calendar, Clock, Image as ImageIcon, BookOpen, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sun, Moon, RefreshCw, ArrowLeft, User, Mail, Calendar, Clock, BookOpen, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { db } from '@/app/components/lib/firebase';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function UserDataPage() {
     const { user: currentUser } = useAuth();
@@ -16,9 +17,10 @@ export default function UserDataPage() {
     const [users, setUsers] = useState([]);
     const [userProgress, setUserProgress] = useState({});
     const [syllabusData, setSyllabusData] = useState({});
-    const { theme } = useTheme();
+    const { theme, toggleTheme, isDark } = useTheme();
     const [isAdmin, setIsAdmin] = useState(false);
     const [expandedUser, setExpandedUser] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Theme styles
     const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
@@ -26,6 +28,7 @@ export default function UserDataPage() {
     const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900';
     const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600';
     const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
+    const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900';
 
     useEffect(() => {
         if (currentUser && currentUser.email === "anishseth0510@gmail.com") {
@@ -96,6 +99,28 @@ export default function UserDataPage() {
         setExpandedUser(expandedUser === userId ? null : userId);
     };
 
+    const calculateProgress = (subjectProgress, subjectId) => {
+        const subjectInfo = syllabusData[subjectId];
+        if (!subjectInfo || !subjectInfo.modules) return 0;
+
+        const totalModules = subjectInfo.modules.length;
+        if (totalModules === 0) return 0;
+
+        let completedCount = 0;
+
+        for (let i = 0; i < totalModules; i++) {
+            if (subjectProgress[`module_${i}`] === true) {
+                completedCount++;
+            }
+        }
+
+        return {
+            percentage: Math.round((completedCount / totalModules) * 100),
+            completedCount,
+            totalModules
+        };
+    };
+
     const renderProgressData = (userId) => {
         const progress = userProgress[userId];
         if (!progress) return <div className={`text-sm ${secondaryText} italic`}>No progress data</div>;
@@ -111,65 +136,63 @@ export default function UserDataPage() {
 
                     const subjectId = key.replace('subject_', '');
                     const subjectInfo = syllabusData[subjectId];
-                    const subjectName = subjectInfo?.name || `Subject: ${subjectId}`;
-                    const subjectCode = subjectInfo?.code ? `(${subjectInfo.code})` : '';
+                    if (!subjectInfo) return null;
+
+                    const progress = calculateProgress(value, subjectId);
 
                     return (
                         <div key={key} className="mb-4">
                             <div className={`font-medium ${textColor} flex items-center justify-between`}>
                                 <span>
-                                    {subjectName} {subjectCode}
-                                    {subjectInfo?.branch && (
-                                        <span className={`text-xs ml-2 ${secondaryText}`}>
-                                            {subjectInfo.branch} • Year {subjectInfo.year} • Sem {subjectInfo.semester}
-                                        </span>
-                                    )}
+                                    {subjectInfo.name}
+                                    <span className={`text-sm ml-2 ${secondaryText}`}>
+                                        ({subjectInfo.code})
+                                    </span>
+                                </span>
+                                <span className={`text-sm ${progress.percentage === 100 ? 'text-green-500' : 'text-indigo-500'}`}>
+                                    {progress.percentage}%
                                 </span>
                             </div>
+                            <div className={`text-xs ${secondaryText} mb-2`}>
+                                {subjectInfo.branch} • Year {subjectInfo.year} • Sem {subjectInfo.semester}
+                            </div>
 
-                            {typeof value === 'object' && value !== null ? (
-                                <div className="ml-4 mt-2">
-                                    {Object.entries(value).map(([moduleKey, moduleValue]) => {
-                                        if (!moduleKey.startsWith('module_')) return null;
-
-                                        const moduleIndex = parseInt(moduleKey.replace('module_', ''));
-                                        const moduleInfo = subjectInfo?.modules?.[moduleIndex];
-                                        const moduleName = moduleInfo?.name || `Module ${moduleIndex}`;
-
-                                        return (
-                                            <div key={moduleKey} className="mb-2">
-                                                <div className="flex items-center">
-                                                    <span className={`text-sm font-medium ${secondaryText}`}>
-                                                        {moduleName}:
-                                                    </span>
-                                                    <span className={`ml-2 text-sm ${moduleValue ? 'text-green-500' : 'text-yellow-500'}`}>
-                                                        {moduleValue ? 'Completed' : 'In Progress'}
-                                                    </span>
-                                                </div>
-
-                                                {moduleInfo?.topics && (
-                                                    <div className="ml-4 mt-1">
-                                                        <div className={`text-xs ${secondaryText} font-medium`}>Topics:</div>
-                                                        <ul className="list-disc list-inside">
-                                                            {moduleInfo.topics.map((topic, i) => (
-                                                                <li key={i} className={`text-xs ${secondaryText}`}>
-                                                                    {topic}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="ml-4">
-                                    <span className={`text-sm ${secondaryText}`}>
-                                        {value.toString()}
+                            <div className="mb-2">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className={`text-xs ${secondaryText}`}>
+                                        {progress.completedCount} of {progress.totalModules} modules
                                     </span>
                                 </div>
-                            )}
+                                <div className={`w-full ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2.5`}>
+                                    <div
+                                        className={`h-2.5 rounded-full ${progress.percentage === 100 ? 'bg-green-500' : 'bg-indigo-500'}`}
+                                        style={{ width: `${progress.percentage}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {subjectInfo.modules?.map((module, index) => {
+                                const isCompleted = value[`module_${index}`] === true;
+
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`p-2 rounded border mb-2 ${isCompleted
+                                                ? (theme === 'dark' ? 'bg-green-900/30 border-green-700' : 'bg-green-100 border-green-200')
+                                                : (theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
+                                            }`}
+                                    >
+                                        <div className="flex items-center">
+                                            <span className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : secondaryText}`}>
+                                                Module {index + 1}: {module.name}
+                                            </span>
+                                            {isCompleted && (
+                                                <CheckCircle className="w-4 h-4 ml-2 text-green-500" />
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     );
                 })}
@@ -182,6 +205,15 @@ export default function UserDataPage() {
             </div>
         );
     };
+
+    const filteredUsers = users.filter(user => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+            user.name.toLowerCase().includes(searchLower) ||
+            user.email.toLowerCase().includes(searchLower) ||
+            user.id.toLowerCase().includes(searchLower)
+        );
+    });
 
     if (!isAdmin) {
         return (
@@ -204,10 +236,12 @@ export default function UserDataPage() {
             <div className={`min-h-screen ${bgColor} transition-colors duration-200 pb-8`}>
                 {/* Navigation */}
                 <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20">
-                            <div className="flex items-center space-x-2">
-                                <Link href="/dashboard" className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+
+                            {/* Left Section */}
+                            <div className="flex items-center space-x-3">
+                                <Link href="/dashboard" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                                     <ArrowLeft size={20} />
                                 </Link>
                                 <Image
@@ -222,30 +256,70 @@ export default function UserDataPage() {
                                     User Database
                                 </h1>
                             </div>
-                            <button
-                                onClick={fetchAllData}
-                                className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm flex items-center"
-                            >
-                                <RefreshCw className="w-4 h-4 mr-1" />
-                                <span className="hidden sm:inline">Refresh</span>
-                            </button>
+
+                            {/* Right Section */}
+                            <div className="flex items-center space-x-3">
+                                <button
+                                    onClick={fetchAllData}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm flex items-center disabled:opacity-50"
+                                    disabled={loading}
+                                >
+                                    <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+                                    <span className="hidden sm:inline">Refresh</span>
+                                </button>
+
+                                <button
+                                    onClick={toggleTheme}
+                                    className={`p-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2
+            ${isDark ? 'bg-gray-700 hover:bg-gray-600 focus:ring-indigo-500' : 'bg-gray-100 hover:bg-gray-200 focus:ring-blue-500'}`}
+                                    aria-label="Toggle Theme"
+                                >
+                                    <AnimatePresence mode="wait" initial={false}>
+                                        {isDark ? (
+                                            <motion.div
+                                                key="sun"
+                                                initial={{ rotate: -90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: 90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-yellow-400"
+                                            >
+                                                <Sun className="w-5 h-5 md:w-6 md:h-6" />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="moon"
+                                                initial={{ rotate: 90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: -90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-indigo-600"
+                                            >
+                                                <Moon className="w-5 h-5 md:w-6 md:h-6" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </nav>
 
+
                 {/* Main Content */}
-                <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
+                <main className={`max-w-8xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
                     <div className={`${cardBg} p-4 sm:p-6 rounded-lg shadow ${borderColor} border mt-4`}>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                             <h2 className={`text-xl font-bold ${textColor} mb-4 sm:mb-0`}>
-                                {users.length} Registered Users
+                                {filteredUsers.length} {filteredUsers.length === 1 ? 'User' : 'Users'}
                             </h2>
-                            <div className="flex space-x-2 w-full sm:w-auto">
+                            <div className="w-full sm:w-64">
                                 <input
                                     type="text"
                                     placeholder="Search users..."
-                                    className={`px-3 py-1 border rounded-md text-sm w-full sm:w-64 ${borderColor} ${bgColor}`}
-                                // Add search functionality here
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className={`w-full px-3 py-2 border rounded-md text-sm ${borderColor} ${inputBg}`}
                                 />
                             </div>
                         </div>
@@ -257,11 +331,11 @@ export default function UserDataPage() {
                         ) : (
                             <div className="overflow-x-auto">
                                 {/* Mobile Cards */}
-                                <div className="sm:hidden space-y-4">
-                                    {users.map((user) => (
+                                <div className="sm:hidden space-y-3">
+                                    {filteredUsers.map((user) => (
                                         <div
                                             key={user.id}
-                                            className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} border ${borderColor}`}
+                                            className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
@@ -278,9 +352,9 @@ export default function UserDataPage() {
                                                             <User size={18} />
                                                         </div>
                                                     )}
-                                                    <div>
-                                                        <div className={`font-medium ${textColor}`}>{user.name}</div>
-                                                        <div className={`text-xs ${secondaryText}`}>{user.email}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className={`font-medium ${textColor} truncate`}>{user.name}</div>
+                                                        <div className={`text-xs ${secondaryText} truncate`}>{user.email}</div>
                                                     </div>
                                                 </div>
                                                 <button
@@ -361,7 +435,7 @@ export default function UserDataPage() {
                                         </tr>
                                     </thead>
                                     <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                                        {users.map((user) => (
+                                        {filteredUsers.map((user) => (
                                             <>
                                                 <tr key={user.id} className={`hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                                                     <td className="px-4 py-4 whitespace-nowrap">
@@ -438,10 +512,18 @@ export default function UserDataPage() {
                             </div>
                         )}
 
-                        {!loading && users.length === 0 && (
+                        {!loading && filteredUsers.length === 0 && (
                             <div className={`text-center py-8 ${secondaryText}`}>
                                 <User size={48} className="mx-auto mb-4 opacity-50" />
-                                <p>No user data available</p>
+                                <p>{searchQuery ? 'No matching users found' : 'No user data available'}</p>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    >
+                                        Clear search
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
