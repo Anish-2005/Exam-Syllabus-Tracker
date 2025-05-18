@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
-import { Menu,Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity } from 'lucide-react'
+import { User,Menu,Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
