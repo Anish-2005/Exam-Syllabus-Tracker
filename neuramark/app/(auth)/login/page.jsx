@@ -1,6 +1,6 @@
 // app/(auth)/login/page.js
 'use client'
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../components/context/AuthContext';
 import { useTheme } from '../../components/ThemeContext';
@@ -16,9 +16,20 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
-  const { login, googleSignIn, needsProfile } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme, isDark } = useTheme();
+   const { login, googleSignIn, needsProfile, user, userProfile } = useAuth();
+
+  useEffect(() => {
+    // If user is logged in and has a profile (doesn't need profile), redirect to dashboard
+    if (user && !needsProfile && userProfile) {
+      router.push('/dashboard');
+    }
+    // If user is logged in but needs profile, show name modal
+    else if (user && needsProfile) {
+      setShowNameModal(true);
+    }
+  }, [user, needsProfile, userProfile, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,17 +38,11 @@ export default function LoginPage() {
       setError('');
       setLoading(true);
       await login(email, password);
-      
-      // Show name modal if profile is needed
-      if (needsProfile) {
-        setShowNameModal(true);
-      } else {
-        router.push('/dashboard');
-      }
+      // The useEffect will handle redirection or showing the modal
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -45,23 +50,18 @@ export default function LoginPage() {
       setError('');
       setLoading(true);
       await googleSignIn();
-      
-      // Show name modal if profile is needed
-      if (needsProfile) {
-        setShowNameModal(true);
-      } else {
-        router.push('/dashboard');
-      }
+      // The useEffect will handle redirection or showing the modal
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleNameComplete = () => {
     setShowNameModal(false);
     router.push('/dashboard');
   };
+
 
   // Theme-based classes
   const bgColor = isDark ? 'bg-gray-900' : 'bg-gray-50';
@@ -121,7 +121,7 @@ export default function LoginPage() {
         <h2 className={`text-center text-3xl font-extrabold ${textColor}`}>
           Sign in to your account
         </h2>
-        
+
         {error && (
           <div className={`${errorBg} border px-4 py-3 rounded ${textColor}`}>
             {error}
@@ -203,7 +203,7 @@ export default function LoginPage() {
 
       {/* Name Collection Modal */}
       {showNameModal && (
-        <NameCollectionModal 
+        <NameCollectionModal
           onComplete={handleNameComplete}
           onClose={() => setShowNameModal(false)}
         />

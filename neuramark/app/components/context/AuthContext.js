@@ -86,7 +86,9 @@ export function AuthProvider({ children }) {
   const signup = async (email, password) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      setNeedsProfile(true); // New users always need to set profile
+      // After signup, always check if profile exists
+      const profile = await checkUserProfile(userCredential.user.uid);
+      setNeedsProfile(!profile);
       return userCredential.user;
     } catch (error) {
       throw error;
@@ -97,7 +99,7 @@ export function AuthProvider({ children }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const profile = await checkUserProfile(userCredential.user.uid);
-      setNeedsProfile(!profile); // Only need profile if it doesn't exist
+      setNeedsProfile(!profile);
       return userCredential.user;
     } catch (error) {
       throw error;
@@ -118,7 +120,7 @@ export function AuthProvider({ children }) {
     try {
       const result = await signInWithPopup(auth, provider);
       const profile = await checkUserProfile(result.user.uid);
-      setNeedsProfile(!profile); // Only need profile if it doesn't exist
+      setNeedsProfile(!profile);
       return result.user;
     } catch (error) {
       throw error;
