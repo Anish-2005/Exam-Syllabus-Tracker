@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
+import NameCollectionModal from '../../components/NameCollectionModal';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -15,7 +16,8 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup, googleSignIn } = useAuth();
+  const [showNameModal, setShowNameModal] = useState(false);
+  const { signup, googleSignIn, currentUser } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme, isDark } = useTheme();
 
@@ -29,12 +31,14 @@ export default function SignupPage() {
     try {
       setError('');
       setLoading(true);
+      // Sign up and automatically log in the user
       await signup(email, password);
+      // Redirect to dashboard after successful signup/login
       router.push('/dashboard');
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -42,11 +46,16 @@ export default function SignupPage() {
       setError('');
       setLoading(true);
       await googleSignIn();
-      router.push('/dashboard');
+      // Google sign-in will handle redirection in AuthContext
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleNameComplete = () => {
+    setShowNameModal(false);
+    router.push('/dashboard');
   };
 
   // Theme-based classes
@@ -157,6 +166,7 @@ export default function SignupPage() {
                 name="password"
                 type="password"
                 required
+                minLength={6}
                 className={`w-full px-3 py-2 border rounded-md ${borderColor} ${inputBg}`}
                 placeholder="Password (min 6 characters)"
                 value={password}
@@ -170,6 +180,7 @@ export default function SignupPage() {
                 name="confirmPassword"
                 type="password"
                 required
+                minLength={6}
                 className={`w-full px-3 py-2 border rounded-md ${borderColor} ${inputBg}`}
                 placeholder="Confirm Password"
                 value={confirmPassword}
@@ -195,6 +206,17 @@ export default function SignupPage() {
           </Link>
         </div>
       </div>
+
+      {/* Name Collection Modal - Will be shown if needed by AuthContext */}
+      {showNameModal && (
+        <NameCollectionModal 
+          onComplete={handleNameComplete}
+          onClose={() => {
+            setShowNameModal(false);
+            router.push('/dashboard');
+          }}
+        />
+      )}
     </div>
   );
 }

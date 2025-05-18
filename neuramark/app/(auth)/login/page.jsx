@@ -8,13 +8,15 @@ import Link from 'next/link';
 import { Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
+import NameCollectionModal from '../../components/NameCollectionModal';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, googleSignIn } = useAuth();
+  const [showNameModal, setShowNameModal] = useState(false);
+  const { login, googleSignIn, needsProfile } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme, isDark } = useTheme();
 
@@ -25,7 +27,13 @@ export default function LoginPage() {
       setError('');
       setLoading(true);
       await login(email, password);
-      router.push('/dashboard');
+      
+      // Show name modal if profile is needed
+      if (needsProfile) {
+        setShowNameModal(true);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -37,11 +45,22 @@ export default function LoginPage() {
       setError('');
       setLoading(true);
       await googleSignIn();
-      router.push('/dashboard');
+      
+      // Show name modal if profile is needed
+      if (needsProfile) {
+        setShowNameModal(true);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     }
     setLoading(false);
+  };
+
+  const handleNameComplete = () => {
+    setShowNameModal(false);
+    router.push('/dashboard');
   };
 
   // Theme-based classes
@@ -181,6 +200,14 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+
+      {/* Name Collection Modal */}
+      {showNameModal && (
+        <NameCollectionModal 
+          onComplete={handleNameComplete}
+          onClose={() => setShowNameModal(false)}
+        />
+      )}
     </div>
   );
 }

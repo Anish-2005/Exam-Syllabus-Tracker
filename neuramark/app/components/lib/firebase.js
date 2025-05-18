@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, serverTimestamp } from 'firebase/firestore';
-
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -17,20 +17,41 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functions = getFunctions(app);
 
-// Admin email constant
-const ADMIN_EMAIL = "anishseth0510@gmail.com";
+// Configure emulator in development
+if (process.env.NODE_ENV === 'development') {
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+}
+
+// Admin configuration
+const ADMIN_EMAILS = new Set([
+  "anishseth0510@gmail.com",
+  // Add additional admin emails here
+  // "admin2@example.com",
+]);
 
 // Helper function to check if current user is admin
 const isAdmin = () => {
   const user = auth.currentUser;
-  return user && user.email === ADMIN_EMAIL;
+  return user && ADMIN_EMAILS.has(user.email);
 };
 
 // Timestamp utility
 const timestamp = serverTimestamp();
 
-// Google auth provider for authentication
+// Auth providers
 const googleProvider = new GoogleAuthProvider();
+// Add other providers as needed
+// const facebookProvider = new FacebookAuthProvider();
 
-export { auth, db, googleProvider, timestamp, isAdmin, ADMIN_EMAIL };
+export { 
+  auth, 
+  db, 
+  functions,
+  googleProvider, 
+  timestamp, 
+  isAdmin, 
+  ADMIN_EMAILS,
+  app as firebaseApp
+};
