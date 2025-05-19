@@ -5,16 +5,16 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/app/components/lib/firebase';
 import { useTheme } from '@/app/components/ThemeContext';
-import { Trash2, Edit, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, Trash2, Edit, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-
+import { AnimatePresence, motion } from 'framer-motion';
 export default function AdminSubjects() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [allSubjects, setAllSubjects] = useState([]);
-    const { theme } = useTheme();
+    const { theme, toggleTheme, isDark } = useTheme();
     const [isAdmin, setIsAdmin] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -87,13 +87,20 @@ export default function AdminSubjects() {
     return (
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
-                <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                <nav className={`${cardBg} ${borderColor} border-b shadow-lg sticky top-0 z-50`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20">
-                            <div className="flex items-center space-x-2">
-                                <Link href="/dashboard" className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+
+                            {/* Left Section: Back + Logo + Title */}
+                            <div className="flex items-center space-x-3">
+                                <Link
+                                    href="/dashboard"
+                                    className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                    aria-label="Back to Dashboard"
+                                >
                                     <ArrowLeft size={20} />
                                 </Link>
+
                                 <Image
                                     src="/emblem.png"
                                     alt="NeuraMark Logo"
@@ -102,13 +109,52 @@ export default function AdminSubjects() {
                                     className="rounded-sm shadow-sm"
                                     priority
                                 />
-                                <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight`}>
-                                    Admin - All Subjects
+
+                                <h1 className={`text-lg sm:text-2xl font-bold tracking-tight ${textColor}`}>
+                                    Admin – All Subjects
                                 </h1>
                             </div>
+
+                            {/* Right Section: Theme Toggle */}
+                            <div className="flex items-center">
+                                <button
+                                    onClick={toggleTheme}
+                                    className={`p-2 rounded-full shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2
+            ${isDark ? 'bg-gray-700 hover:bg-gray-600 focus:ring-indigo-500' : 'bg-gray-100 hover:bg-gray-200 focus:ring-blue-500'}`}
+                                    aria-label="Toggle Theme"
+                                >
+                                    <AnimatePresence mode="wait" initial={false}>
+                                        {isDark ? (
+                                            <motion.div
+                                                key="sun"
+                                                initial={{ rotate: -90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: 90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-yellow-400"
+                                            >
+                                                <Sun className="w-5 h-5 md:w-6 md:h-6" />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="moon"
+                                                initial={{ rotate: 90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: -90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-indigo-600"
+                                            >
+                                                <Moon className="w-5 h-5 md:w-6 md:h-6" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </button>
+                            </div>
+
                         </div>
                     </div>
                 </nav>
+
 
                 <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
                     <div className={`${cardBg} p-6 rounded-lg shadow ${borderColor} border`}>
@@ -116,7 +162,7 @@ export default function AdminSubjects() {
                             <h2 className={`text-xl font-bold ${textColor}`}>
                                 All Subjects ({allSubjects.length})
                             </h2>
-                            <button 
+                            <button
                                 onClick={fetchAllSubjects}
                                 className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
                             >

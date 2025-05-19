@@ -5,17 +5,17 @@ import { useAuth } from '@/app/components/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { useTheme } from '@/app/components/ThemeContext';
-import { BookOpen, ChevronDown, ChevronUp, RefreshCw, User } from 'lucide-react';
+import { Moon, Sun, BookOpen, ChevronDown, ChevronUp, RefreshCw, User } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { db } from '@/app/components/lib/firebase';
-
+import { AnimatePresence, motion } from 'framer-motion';
 export default function MyProgressPage() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [userProgress, setUserProgress] = useState(null);
     const [syllabusData, setSyllabusData] = useState({});
-    const { theme } = useTheme();
+    const { theme, toggleTheme, isDark } = useTheme();
     const [expandedSubjects, setExpandedSubjects] = useState([]);
 
     // Theme styles
@@ -76,18 +76,18 @@ export default function MyProgressPage() {
     const calculateProgress = (subjectProgress, subjectId) => {
         const subjectInfo = syllabusData[subjectId];
         if (!subjectInfo || !subjectInfo.modules) return 0;
-        
+
         const totalModules = subjectInfo.modules.length;
         if (totalModules === 0) return 0;
-        
+
         let completedCount = 0;
-        
+
         for (let i = 0; i < totalModules; i++) {
             if (subjectProgress[`module_${i}`] === true) {
                 completedCount++;
             }
         }
-        
+
         return {
             percentage: Math.round((completedCount / totalModules) * 100),
             completedCount,
@@ -99,38 +99,89 @@ export default function MyProgressPage() {
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200 pb-8`}>
                 {/* Navigation */}
-                <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                <nav className={`${cardBg} ${borderColor} border-b shadow-lg sticky top-0 z-50`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20">
-                            <div className="flex items-center space-x-2">
-                                <Link href="/dashboard" className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+
+                            {/* Left: Logo and Title */}
+                            <div className="flex items-center space-x-3">
+                                <Link
+                                    href="/dashboard"
+                                    className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                    aria-label="Back to Dashboard"
+                                >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                                            clipRule="evenodd"
+                                        />
                                     </svg>
                                 </Link>
+
                                 <Image
                                     src="/emblem.png"
                                     alt="NeuraMark Logo"
-                                    width={36}
-                                    height={36}
-                                    className="rounded-sm shadow-sm"
+                                    width={40}
+                                    height={40}
+                                    className="rounded shadow-sm"
                                     priority
                                 />
-                                <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight`}>
+
+                                <h1 className={`text-lg sm:text-2xl font-bold tracking-tight ${textColor}`}>
                                     My Learning Progress
                                 </h1>
                             </div>
-                            <button
-                                onClick={fetchUserData}
-                                className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm flex items-center"
-                                disabled={loading}
-                            >
-                                <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-                                <span className="hidden sm:inline">Refresh</span>
-                            </button>
+
+                            {/* Right: Actions */}
+                            <div className="flex items-center space-x-3">
+                                <button
+                                    onClick={fetchUserData}
+                                    className="flex items-center px-3 py-1.5 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                                    disabled={loading}
+                                >
+                                    <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+                                    <span className="hidden sm:inline">Refresh</span>
+                                </button>
+
+                                <button
+                                    onClick={toggleTheme}
+                                    className={`p-2 rounded-full shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2
+            ${isDark ? 'bg-gray-700 hover:bg-gray-600 focus:ring-indigo-500' : 'bg-gray-100 hover:bg-gray-200 focus:ring-blue-500'}`}
+                                    aria-label="Toggle Theme"
+                                >
+                                    <AnimatePresence mode="wait" initial={false}>
+                                        {isDark ? (
+                                            <motion.div
+                                                key="sun"
+                                                initial={{ rotate: -90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: 90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-yellow-400"
+                                            >
+                                                <Sun className="w-5 h-5 md:w-6 md:h-6" />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="moon"
+                                                initial={{ rotate: 90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: -90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-indigo-600"
+                                            >
+                                                <Moon className="w-5 h-5 md:w-6 md:h-6" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </button>
+                            </div>
+
                         </div>
                     </div>
                 </nav>
+
 
                 {/* Main Content */}
                 <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
@@ -186,14 +237,14 @@ export default function MyProgressPage() {
 
                                     return (
                                         <div key={key} className={`rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
-                                            <div 
+                                            <div
                                                 className="p-4 cursor-pointer"
                                                 onClick={() => toggleSubjectExpand(subjectId)}
                                             >
                                                 <div className="flex justify-between items-center">
                                                     <div>
                                                         <h3 className={`font-medium ${textColor}`}>
-                                                            {subjectInfo.name} 
+                                                            {subjectInfo.name}
                                                             <span className={`text-sm ml-2 ${secondaryText}`}>
                                                                 ({subjectInfo.code})
                                                             </span>
@@ -244,15 +295,14 @@ export default function MyProgressPage() {
                                                     <div className="space-y-3">
                                                         {subjectInfo.modules?.map((module, index) => {
                                                             const isCompleted = value[`module_${index}`] === true;
-                                                            
+
                                                             return (
-                                                                <div 
-                                                                    key={index} 
-                                                                    className={`p-3 rounded border ${
-                                                                        isCompleted 
+                                                                <div
+                                                                    key={index}
+                                                                    className={`p-3 rounded border ${isCompleted
                                                                             ? (theme === 'dark' ? 'bg-green-900/30 border-green-700' : 'bg-green-100 border-green-200')
                                                                             : (theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     <div className="flex justify-between items-start">
                                                                         <div className="flex-1">

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
-import { User,Menu,Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity } from 'lucide-react'
+import { User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
@@ -739,204 +739,202 @@ export default function Dashboard() {
         <ProtectedRoute>
             <Suspense fallback={<div>Loading...</div>}>
                 <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
-                     <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 md:h-20">
-            {/* Left Section */}
-            <div className="flex items-center space-x-3 min-w-0">
-              <Image
-                src="/emblem.png"
-                alt="NeuraMark Logo"
-                width={36}
-                height={36}
-                className="rounded-sm shadow-sm shrink-0"
-                priority
-              />
-              <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
-                NeuraMark
-              </h1>
+                    <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center h-16 md:h-20">
+                                {/* Left Section */}
+                                <div className="flex items-center space-x-3 min-w-0">
+                                    <Image
+                                        src="/emblem.png"
+                                        alt="NeuraMark Logo"
+                                        width={36}
+                                        height={36}
+                                        className="rounded-sm shadow-sm shrink-0"
+                                        priority
+                                    />
+                                    <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
+                                        NeuraMark
+                                    </h1>
 
-              {isAdmin && (
-                <span className="ml-1 px-2 py-0.5 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs rounded-full shadow-sm">
-                  ADMIN
-                </span>
-              )}
-            </div>
+                                    {isAdmin && (
+                                        <span className="ml-1 px-2 py-0.5 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs rounded-full shadow-sm">
+                                            ADMIN
+                                        </span>
+                                    )}
+                                </div>
 
-            {/* Desktop Controls */}
-            <div className="hidden md:flex items-center space-x-3">
-              {user?.photoURL ? (
-                <Image
-                  src={user.photoURL}
-                  alt={user.displayName || 'User'}
-                  width={28}
-                  height={28}
-                  className="rounded-full"
-                />
-              ) : (
-                <div className="h-7 w-7 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
-                  <User size={16} />
-                </div>
-              )}
+                                {/* Desktop Controls */}
+                                <div className="hidden md:flex items-center space-x-3">
+                                    {user?.photoURL ? (
+                                        <Image
+                                            src={user.photoURL}
+                                            alt={user.displayName || 'User'}
+                                            width={28}
+                                            height={28}
+                                            className="rounded-full"
+                                        />
+                                    ) : (
+                                        <div className="h-7 w-7 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
+                                            <User size={16} />
+                                        </div>
+                                    )}
 
-              <span className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[200px]`}>
-                {user?.displayName || user?.email}
-              </span>
+                                    <span className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[200px]`}>
+                                        {user?.displayName || user?.email}
+                                    </span>
 
-              <button
-                onClick={logout}
-                className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
-              >
-                Logout
-              </button>
+                                    <button
+                                        onClick={logout}
+                                        className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+                                    >
+                                        Logout
+                                    </button>
 
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-full transition-all duration-300
+                                    <button
+                                        onClick={toggleTheme}
+                                        className={`p-2 rounded-full transition-all duration-300
                   ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
                   shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
                   ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
-                aria-label="Toggle Theme"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  {isDark ? (
-                    <motion.div
-                      key="sun"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-yellow-400"
-                    >
-                      <Sun className="w-5 h-5 md:w-6 md:h-6" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="moon"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-indigo-600"
-                    >
-                      <Moon className="w-5 h-5 md:w-6 md:h-6" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-            </div>
+                                        aria-label="Toggle Theme"
+                                    >
+                                        <AnimatePresence mode="wait" initial={false}>
+                                            {isDark ? (
+                                                <motion.div
+                                                    key="sun"
+                                                    initial={{ rotate: -90, opacity: 0 }}
+                                                    animate={{ rotate: 0, opacity: 1 }}
+                                                    exit={{ rotate: 90, opacity: 0 }}
+                                                    transition={{ duration: 0.3 }}
+                                                    className="text-yellow-400"
+                                                >
+                                                    <Sun className="w-5 h-5 md:w-6 md:h-6" />
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div
+                                                    key="moon"
+                                                    initial={{ rotate: 90, opacity: 0 }}
+                                                    animate={{ rotate: 0, opacity: 1 }}
+                                                    exit={{ rotate: -90, opacity: 0 }}
+                                                    transition={{ duration: 0.3 }}
+                                                    className="text-indigo-600"
+                                                >
+                                                    <Moon className="w-5 h-5 md:w-6 md:h-6" />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </button>
+                                </div>
 
-            {/* Hamburger for Mobile */}
-            <div className="md:hidden">
-              <button onClick={() => setSidebarOpen(true)} aria-label="Open Menu">
-                <Menu className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+                                {/* Hamburger for Mobile */}
+                                <div className="md:hidden">
+                                    <button onClick={() => setSidebarOpen(true)} aria-label="Open Menu">
+                                        <Menu className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
 
-      {/* Sidebar for Mobile */}
-    <AnimatePresence>
-  {sidebarOpen && (
-    <motion.div
-      initial={{ x: '-100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '-100%' }}
-      transition={{ type: 'tween', duration: 0.3 }}
-      className={`fixed inset-0 z-50 w-64 max-w-full p-4 flex flex-col gap-4 shadow-lg ${
-        isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
-      }`}
-    >
-      {/* Top Section */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-2">
-          <Image
-            src="/emblem.png"
-            alt="NeuraMark Logo"
-            width={28}
-            height={28}
-            className="rounded shadow-sm"
-          />
-          <div className="flex items-center space-x-1">
-            <h2 className={`font-bold text-lg sm:text-xl ${textColor}`}>NeuraMark</h2>
-            {isAdmin && (
-              <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-full shadow">
-                ADMIN
-              </span>
-            )}
-          </div>
-        </div>
-        <button onClick={() => setSidebarOpen(false)} aria-label="Close Menu">
-          <X className="w-6 h-6" />
-        </button>
-      </div>
+                    {/* Sidebar for Mobile */}
+                    <AnimatePresence>
+                        {sidebarOpen && (
+                            <motion.div
+                                initial={{ x: '-100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: '-100%' }}
+                                transition={{ type: 'tween', duration: 0.3 }}
+                                className={`fixed inset-0 z-50 w-64 max-w-full p-4 flex flex-col gap-4 shadow-lg ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+                                    }`}
+                            >
+                                {/* Top Section */}
+                                <div className="flex justify-between items-center mb-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Image
+                                            src="/emblem.png"
+                                            alt="NeuraMark Logo"
+                                            width={28}
+                                            height={28}
+                                            className="rounded shadow-sm"
+                                        />
+                                        <div className="flex items-center space-x-1">
+                                            <h2 className={`font-bold text-lg sm:text-xl ${textColor}`}>NeuraMark</h2>
+                                            {isAdmin && (
+                                                <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-full shadow">
+                                                    ADMIN
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setSidebarOpen(false)} aria-label="Close Menu">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
 
-      {/* User Info */}
-      <div className="flex items-center space-x-2">
-        {user?.photoURL ? (
-          <Image
-            src={user.photoURL}
-            alt={user.displayName || 'User'}
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
-        ) : (
-          <div className="h-8 w-8 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
-            <User size={16} />
-          </div>
-        )}
-        <span className={`text-sm truncate ${secondaryText}`}>
-          {user?.displayName || user?.email}
-        </span>
-      </div>
+                                {/* User Info */}
+                                <div className="flex items-center space-x-2">
+                                    {user?.photoURL ? (
+                                        <Image
+                                            src={user.photoURL}
+                                            alt={user.displayName || 'User'}
+                                            width={32}
+                                            height={32}
+                                            className="rounded-full"
+                                        />
+                                    ) : (
+                                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
+                                            <User size={16} />
+                                        </div>
+                                    )}
+                                    <span className={`text-sm truncate ${secondaryText}`}>
+                                        {user?.displayName || user?.email}
+                                    </span>
+                                </div>
 
-      {/* Buttons */}
-      <button
-        onClick={logout}
-        className="w-full mt-4 py-2 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm transition"
-      >
-        Logout
-      </button>
+                                {/* Buttons */}
+                                <button
+                                    onClick={logout}
+                                    className="w-full mt-4 py-2 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm transition"
+                                >
+                                    Logout
+                                </button>
 
-      {/* Theme Toggle with Icon */}
-      <button
-        onClick={toggleTheme}
-        className={`mt-2 p-2 w-full rounded-md transition-all duration-300 flex justify-center items-center ${
-          isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
-        }`}
-        aria-label="Toggle Theme"
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          {isDark ? (
-            <motion.div
-              key="sun"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-yellow-400"
-            >
-              <Sun className="w-5 h-5" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="moon"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-indigo-600"
-            >
-              <Moon className="w-5 h-5" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </button>
-    </motion.div>
-  )}
-</AnimatePresence>
+                                {/* Theme Toggle with Icon */}
+                                <button
+                                    onClick={toggleTheme}
+                                    className={`mt-2 p-2 w-full rounded-md transition-all duration-300 flex justify-center items-center ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
+                                        }`}
+                                    aria-label="Toggle Theme"
+                                >
+                                    <AnimatePresence mode="wait" initial={false}>
+                                        {isDark ? (
+                                            <motion.div
+                                                key="sun"
+                                                initial={{ rotate: -90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: 90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-yellow-400"
+                                            >
+                                                <Sun className="w-5 h-5" />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="moon"
+                                                initial={{ rotate: 90, opacity: 0 }}
+                                                animate={{ rotate: 0, opacity: 1 }}
+                                                exit={{ rotate: -90, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-indigo-600"
+                                            >
+                                                <Moon className="w-5 h-5" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
 
 
@@ -1182,10 +1180,21 @@ export default function Dashboard() {
                                 >
                                     <span>Your Progress</span>
                                 </Link>
-
+                                <Link
+                                    href="/dashboard/kra-kpi"
+                                    className="flex items-center gap-2 px-4 py-2 bg-orange-700 text-white rounded-md hover:bg-orange-800 transition-colors duration-200"
+                                >
+                                    <span>Performance Dashboard</span>
+                                </Link>
                                 {/* Admin-only actions */}
                                 {isAdmin && (
                                     <>
+                                      <Link
+                                            href="/admin/analytics"
+                                            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors duration-200"
+                                        >
+                                            <span>Analytics</span>
+                                        </Link>
                                         <Link
                                             href="/admin/subjects"
                                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
