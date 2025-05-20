@@ -769,28 +769,28 @@ export default function Dashboard() {
                                 {/* Desktop Controls */}
                                 <div className="hidden md:flex items-center space-x-4">
 
-                                    {user?.photoURL ? (
+                                    {user.photoURL ? (
                                         <Image
                                             src={user.photoURL}
                                             alt={user.displayName || 'User'}
                                             width={28}
                                             height={28}
                                             className="rounded-full"
+                                            key={user.uid} // Add key to force re-render when user changes
                                         />
                                     ) : (
                                         <div className="h-7 w-7 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
                                             <User size={16} />
                                         </div>
                                     )}
-
                                     <span className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[200px]`}>
                                         {user?.displayName || user?.email}
                                     </span>
                                     <Link
                                         href="/chat"
                                         className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all ${router.pathname === '/chat'
-                                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
-                                                : ''
+                                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
+                                            : ''
                                             }`}
                                         aria-label="Chat"
                                     >
@@ -798,8 +798,8 @@ export default function Dashboard() {
                                             <MessageCircle
                                                 size={23}
                                                 className={`text-blue-400 transition-transform duration-200 ${router.pathname === '/chat'
-                                                        ? 'scale-110 text-blue-500 dark:text-blue-300'
-                                                        : 'hover:scale-110'
+                                                    ? 'scale-110 text-blue-500 dark:text-blue-300'
+                                                    : 'hover:scale-110'
                                                     }`}
                                             />
                                             <span className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none">

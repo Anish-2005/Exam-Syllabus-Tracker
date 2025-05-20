@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 
 export default function ExamsPage() {
     const { user } = useAuth();
+    const router=useRouter();
     const { theme, toggleTheme, isDark } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [exams, setExams] = useState([]);
@@ -174,7 +175,7 @@ export default function ExamsPage() {
                                 <div className="flex items-center space-x-3 min-w-0">
                                     <Link
                                         href="/dashboard"
-                                        className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                        className="p-2 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
                                         aria-label="Back to Dashboard"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -195,7 +196,9 @@ export default function ExamsPage() {
                                 </div>
 
                                 {/* Desktop Controls */}
-                                <div className="hidden md:flex items-center space-x-3">
+                                <div className="hidden md:flex items-center space-x-4">
+                                   
+
                                     {user?.photoURL ? (
                                         <Image
                                             src={user.photoURL}
@@ -217,9 +220,9 @@ export default function ExamsPage() {
                                     <button
                                         onClick={toggleTheme}
                                         className={`p-2 rounded-full transition-all duration-300
-                  ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                  shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                  ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
+                        shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
                                         aria-label="Toggle Theme"
                                     >
                                         <AnimatePresence mode="wait" initial={false}>
@@ -252,7 +255,11 @@ export default function ExamsPage() {
 
                                 {/* Hamburger for Mobile */}
                                 <div className="md:hidden">
-                                    <button onClick={() => setSidebarOpen(true)} aria-label="Open Menu">
+                                    <button
+                                        onClick={() => setSidebarOpen(true)}
+                                        aria-label="Open Menu"
+                                        className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    >
                                         <Menu className="w-6 h-6" />
                                     </button>
                                 </div>
@@ -260,7 +267,7 @@ export default function ExamsPage() {
                         </div>
                     </nav>
 
-                    {/* Sidebar for Mobile */}
+                    {/* Mobile Sidebar */}
                     <AnimatePresence>
                         {sidebarOpen && (
                             <motion.div
@@ -268,8 +275,7 @@ export default function ExamsPage() {
                                 animate={{ x: 0 }}
                                 exit={{ x: '-100%' }}
                                 transition={{ type: 'tween', duration: 0.3 }}
-                                className={`fixed inset-0 z-50 w-64 max-w-full p-4 flex flex-col gap-4 shadow-lg ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
-                                    }`}
+                                className={`fixed inset-0 z-50 w-64 max-w-full p-4 flex flex-col gap-4 shadow-lg ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}
                             >
                                 {/* Top Section */}
                                 <div className="flex justify-between items-center mb-4">
@@ -281,15 +287,46 @@ export default function ExamsPage() {
                                             height={28}
                                             className="rounded shadow-sm"
                                         />
-                                        <h2 className={`font-bold text-lg sm:text-xl ${textColor}`}>My Exams</h2>
+                                        <h2 className={`font-bold text-lg sm:text-xl ${textColor}`}>
+                                            My Exams
+                                        </h2>
                                     </div>
-                                    <button onClick={() => setSidebarOpen(false)} aria-label="Close Menu">
+                                    <button
+                                        onClick={() => setSidebarOpen(false)}
+                                        aria-label="Close Menu"
+                                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    >
                                         <X className="w-6 h-6" />
                                     </button>
                                 </div>
 
+                                {/* Navigation Links */}
+                                <div className="flex flex-col space-y-2">
+                                    <Link
+                                        href="/dashboard"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
+                                                : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        Dashboard
+                                    </Link>
+
+                                    <Link
+                                        href="/chat"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard/progress'
+                                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
+                                                : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        Chat
+                                    </Link>
+                                </div>
+
                                 {/* User Info */}
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2 mt-auto">
                                     {user?.photoURL ? (
                                         <Image
                                             src={user.photoURL}
@@ -308,26 +345,10 @@ export default function ExamsPage() {
                                     </span>
                                 </div>
 
-                                {/* Navigation Links */}
-                                <div className="mt-4 space-y-2">
-                                    <Link
-                                        href="/dashboard"
-                                        className={`block px-4 py-2 rounded-md ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                                    >
-                                        Dashboard
-                                    </Link>
-                                    <Link
-                                        href="/dashboard/progress"
-                                        className={`block px-4 py-2 rounded-md ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                                    >
-                                        My Progress
-                                    </Link>
-                                </div>
-
-                                {/* Theme Toggle with Icon */}
+                                {/* Theme Toggle */}
                                 <button
                                     onClick={toggleTheme}
-                                    className={`mt-2 p-2 w-full rounded-md transition-all duration-300 flex justify-center items-center ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
+                                    className={`p-2 w-full rounded-md transition-all duration-300 flex justify-center items-center ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
                                         }`}
                                     aria-label="Toggle Theme"
                                 >
@@ -339,9 +360,10 @@ export default function ExamsPage() {
                                                 animate={{ rotate: 0, opacity: 1 }}
                                                 exit={{ rotate: 90, opacity: 0 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="text-yellow-400"
+                                                className="text-yellow-400 flex items-center space-x-2"
                                             >
                                                 <Sun className="w-5 h-5" />
+                                                <span>Light Mode</span>
                                             </motion.div>
                                         ) : (
                                             <motion.div
@@ -350,9 +372,10 @@ export default function ExamsPage() {
                                                 animate={{ rotate: 0, opacity: 1 }}
                                                 exit={{ rotate: -90, opacity: 0 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="text-indigo-600"
+                                                className="text-indigo-600 flex items-center space-x-2"
                                             >
                                                 <Moon className="w-5 h-5" />
+                                                <span>Dark Mode</span>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
