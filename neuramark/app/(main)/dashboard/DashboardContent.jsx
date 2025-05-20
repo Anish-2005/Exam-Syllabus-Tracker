@@ -7,11 +7,12 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
-import { ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
+import { MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Navbar from '@/app/components/Navbar';
 
 export default function Dashboard() {
     const { user, logout } = useAuth();
@@ -37,6 +38,7 @@ export default function Dashboard() {
     const [showAddSubject, setShowAddSubject] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
+    const pageTitle = "NeuraMark";
     const [newSubject, setNewSubject] = useState({
         name: '',
         code: '',
@@ -754,7 +756,7 @@ export default function Dashboard() {
                                         priority
                                     />
                                     <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
-                                        NeuraMark
+                                        {pageTitle}
                                     </h1>
 
                                     {isAdmin && (
@@ -765,7 +767,8 @@ export default function Dashboard() {
                                 </div>
 
                                 {/* Desktop Controls */}
-                                <div className="hidden md:flex items-center space-x-3">
+                                <div className="hidden md:flex items-center space-x-4">
+
                                     {user?.photoURL ? (
                                         <Image
                                             src={user.photoURL}
@@ -783,6 +786,27 @@ export default function Dashboard() {
                                     <span className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[200px]`}>
                                         {user?.displayName || user?.email}
                                     </span>
+                                    <Link
+                                        href="/chat"
+                                        className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all ${router.pathname === '/chat'
+                                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
+                                                : ''
+                                            }`}
+                                        aria-label="Chat"
+                                    >
+                                        <div className="relative">
+                                            <MessageCircle
+                                                size={23}
+                                                className={`text-blue-400 transition-transform duration-200 ${router.pathname === '/chat'
+                                                        ? 'scale-110 text-blue-500 dark:text-blue-300'
+                                                        : 'hover:scale-110'
+                                                    }`}
+                                            />
+                                            <span className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                                Chat
+                                            </span>
+                                        </div>
+                                    </Link>
 
                                     <button
                                         onClick={logout}
@@ -794,9 +818,9 @@ export default function Dashboard() {
                                     <button
                                         onClick={toggleTheme}
                                         className={`p-2 rounded-full transition-all duration-300
-                  ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                  shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                  ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
+                        shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
                                         aria-label="Toggle Theme"
                                     >
                                         <AnimatePresence mode="wait" initial={false}>
@@ -829,7 +853,11 @@ export default function Dashboard() {
 
                                 {/* Hamburger for Mobile */}
                                 <div className="md:hidden">
-                                    <button onClick={() => setSidebarOpen(true)} aria-label="Open Menu">
+                                    <button
+                                        onClick={() => setSidebarOpen(true)}
+                                        aria-label="Open Menu"
+                                        className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-200"
+                                    >
                                         <Menu className="w-6 h-6" />
                                     </button>
                                 </div>
@@ -838,6 +866,7 @@ export default function Dashboard() {
                     </nav>
 
                     {/* Sidebar for Mobile */}
+                    {/* Sidebar for Mobile */}
                     <AnimatePresence>
                         {sidebarOpen && (
                             <motion.div
@@ -845,8 +874,7 @@ export default function Dashboard() {
                                 animate={{ x: 0 }}
                                 exit={{ x: '-100%' }}
                                 transition={{ type: 'tween', duration: 0.3 }}
-                                className={`fixed inset-0 z-50 w-64 max-w-full p-4 flex flex-col gap-4 shadow-lg ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
-                                    }`}
+                                className={`fixed inset-0 z-50 w-64 max-w-full p-4 flex flex-col gap-4 shadow-lg ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}
                             >
                                 {/* Top Section */}
                                 <div className="flex justify-between items-center mb-4">
@@ -859,7 +887,9 @@ export default function Dashboard() {
                                             className="rounded shadow-sm"
                                         />
                                         <div className="flex items-center space-x-1">
-                                            <h2 className={`font-bold text-lg sm:text-xl ${textColor}`}>NeuraMark</h2>
+                                            <h2 className={`font-bold text-lg sm:text-xl ${textColor}`}>
+                                                {pageTitle}
+                                            </h2>
                                             {isAdmin && (
                                                 <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-full shadow">
                                                     ADMIN
@@ -867,13 +897,45 @@ export default function Dashboard() {
                                             )}
                                         </div>
                                     </div>
-                                    <button onClick={() => setSidebarOpen(false)} aria-label="Close Menu">
+                                    <button
+                                        onClick={() => setSidebarOpen(false)}
+                                        aria-label="Close Menu"
+                                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    >
                                         <X className="w-6 h-6" />
                                     </button>
                                 </div>
 
+                                {/* Navigation Links */}
+                                <div className="flex flex-col space-y-2">
+
+                                    <Link
+                                        href="/dashboard"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
+                                            : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        Dashboard
+                                    </Link>
+
+                                    <Link
+                                        href="/chat"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/chat'
+                                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
+                                            : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        Chat
+                                    </Link>
+
+                                    {/* Add more navigation links as needed */}
+                                </div>
+
                                 {/* User Info */}
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2 mt-auto">
                                     {user?.photoURL ? (
                                         <Image
                                             src={user.photoURL}
@@ -894,8 +956,11 @@ export default function Dashboard() {
 
                                 {/* Buttons */}
                                 <button
-                                    onClick={logout}
-                                    className="w-full mt-4 py-2 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm transition"
+                                    onClick={() => {
+                                        logout();
+                                        setSidebarOpen(false);
+                                    }}
+                                    className="w-full py-2 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm transition"
                                 >
                                     Logout
                                 </button>
@@ -903,7 +968,7 @@ export default function Dashboard() {
                                 {/* Theme Toggle with Icon */}
                                 <button
                                     onClick={toggleTheme}
-                                    className={`mt-2 p-2 w-full rounded-md transition-all duration-300 flex justify-center items-center ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
+                                    className={`p-2 w-full rounded-md transition-all duration-300 flex justify-center items-center ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
                                         }`}
                                     aria-label="Toggle Theme"
                                 >
@@ -915,9 +980,10 @@ export default function Dashboard() {
                                                 animate={{ rotate: 0, opacity: 1 }}
                                                 exit={{ rotate: 90, opacity: 0 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="text-yellow-400"
+                                                className="text-yellow-400 flex items-center space-x-2"
                                             >
                                                 <Sun className="w-5 h-5" />
+                                                <span>Light Mode</span>
                                             </motion.div>
                                         ) : (
                                             <motion.div
@@ -926,9 +992,10 @@ export default function Dashboard() {
                                                 animate={{ rotate: 0, opacity: 1 }}
                                                 exit={{ rotate: -90, opacity: 0 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="text-indigo-600"
+                                                className="text-indigo-600 flex items-center space-x-2"
                                             >
                                                 <Moon className="w-5 h-5" />
+                                                <span>Dark Mode</span>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -936,7 +1003,6 @@ export default function Dashboard() {
                             </motion.div>
                         )}
                     </AnimatePresence>
-
 
 
                     <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
