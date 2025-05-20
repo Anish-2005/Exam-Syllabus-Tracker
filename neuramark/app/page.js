@@ -81,8 +81,9 @@ export default function Home() {
           NeuraMark
         </h1>
         <p className={`text-lg mb-8 ${textSecondary}`}>
-          Track your B.Tech syllabus progress from 1st to 4th year across all branches including CSE, ECE, AIML, DS, EE, ME and more.
+          Track your academic progress from 1st to final year across a wide range of courses — from B.Tech branches like CSE, ECE, AIML, DS, EE, ME, and more, to non-tech programs such as BCA, BBA, BHM, and others.
         </p>
+
         <div className="flex gap-4 justify-center">
           <Link
             href={user ? '/dashboard' : '/login'}
