@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/app/components/lib/firebase';
 import { useTheme } from '@/app/components/ThemeContext';
-import {RefreshCw,Menu, Moon, Sun, Trash2, Edit, ArrowLeft ,X} from 'lucide-react';
+import {User,RefreshCw,Menu, Moon, Sun, Trash2, Edit, ArrowLeft ,X} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
