@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../components/lib/firebase';
 import { useTheme } from '../../components/ThemeContext';
-import { User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity } from 'lucide-react'
+import { ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
@@ -27,6 +27,7 @@ export default function Dashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedModuleIndex, setSelectedModuleIndex] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [showActions, setShowActions] = useState(false);
     const [branches, setBranches] = useState([]);
     const [initialPrefsLoaded, setInitialPrefsLoaded] = useState(false);
     const [years, setYears] = useState([]);
@@ -1172,52 +1173,121 @@ export default function Dashboard() {
                                     </div>
                                 )}
                             </div>
-                            <div className="mt-6 flex flex-wrap justify-end gap-3">
-                                {/* Always visible */}
-                                <Link
-                                    href="/dashboard/progress"
-                                    className="flex items-center gap-2 px-4 py-2 bg-violet-800 text-white rounded-md hover:bg-violet-900 transition-colors duration-200"
-                                >
-                                    <span>Your Progress</span>
-                                </Link>
-                                <Link
-                                    href="/dashboard/kra-kpi"
-                                    className="flex items-center gap-2 px-4 py-2 bg-orange-700 text-white rounded-md hover:bg-orange-800 transition-colors duration-200"
-                                >
-                                    <span>Performance Dashboard</span>
-                                </Link>
-                                {/* Admin-only actions */}
-                                {isAdmin && (
-                                    <>
-                                      <Link
-                                            href="/admin/analytics"
-                                            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors duration-200"
-                                        >
-                                            <span>Analytics</span>
-                                        </Link>
-                                        <Link
-                                            href="/admin/subjects"
-                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
-                                        >
-                                            <span>All Subjects</span>
-                                        </Link>
+                            <div className="mt-8">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className={`text-lg font-semibold ${secondaryText}`}>Quick Actions</h3>
+                                    <button
+                                        onClick={() => setShowActions(!showActions)}
+                                        className="text-sm text-blue-600 hover:underline flex items-center"
+                                    >
+                                        {showActions ? (
+                                            <>
+                                                Hide <ChevronUp size={16} className="ml-1" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                Show <ChevronDown size={16} className="ml-1" />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
 
-                                        <Link
-                                            href="/admin/active-users"
-                                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
-                                        >
-                                            <Activity size={16} />
-                                            <span>Active Users</span>
-                                        </Link>
+                                {showActions && (
+                                    <div className="overflow-x-auto sm:overflow-x-visible">
+                                        <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 min-w-[500px] sm:min-w-0">
+                                            {/* Shared Action Button Component */}
+                                            {[
+                                                {
+                                                    href: '/dashboard/progress',
+                                                    label: 'My Progress',
+                                                    colors: ['from-violet-600', 'to-violet-800'],
+                                                    hover: ['from-violet-700', 'to-violet-900'],
+                                                    bar: 'bg-violet-400',
+                                                    icon: <Bookmark size={20} />,
+                                                },
+                                                {
+                                                    href: '/dashboard/exams',
+                                                    label: 'My Exams',
+                                                    colors: ['from-blue-600', 'to-blue-800'],
+                                                    hover: ['from-blue-700', 'to-blue-900'],
+                                                    bar: 'bg-blue-400',
+                                                    icon: <Clipboard size={20} />,
+                                                },
+                                                {
+                                                    href: '/dashboard/kra-kpi',
+                                                    label: 'Performance',
+                                                    colors: ['from-orange-600', 'to-orange-700'],
+                                                    hover: ['from-orange-700', 'to-orange-800'],
+                                                    bar: 'bg-orange-400',
+                                                    icon: <BarChart2 size={20} />,
+                                                },
+                                                ...(isAdmin
+                                                    ? [
+                                                        {
+                                                            href: '/admin/analytics',
+                                                            label: 'Analytics',
+                                                            colors: ['from-cyan-600', 'to-cyan-700'],
+                                                            hover: ['from-cyan-700', 'to-cyan-800'],
+                                                            bar: 'bg-cyan-400',
+                                                            icon: <PieChart size={20} />,
+                                                        },
+                                                        {
+                                                            href: '/admin/subjects',
+                                                            label: 'All Subjects',
+                                                            colors: ['from-indigo-600', 'to-indigo-700'],
+                                                            hover: ['from-indigo-700', 'to-indigo-800'],
+                                                            bar: 'bg-indigo-400',
+                                                            icon: <BookOpen size={20} />,
+                                                        },
+                                                        {
+                                                            href: '/admin/active-users',
+                                                            label: 'Active Users',
+                                                            colors: ['from-green-600', 'to-green-700'],
+                                                            hover: ['from-green-700', 'to-green-800'],
+                                                            bar: 'bg-green-400',
+                                                            icon: <Activity size={20} />,
+                                                        },
+                                                    ]
+                                                    : []),
+                                            ].map((item, idx) => (
+                                                <Link
+                                                    key={idx}
+                                                    href={item.href}
+                                                    className={`group relative flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${item.colors.join(
+                                                        ' '
+                                                    )} text-white overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] min-w-[150px]`}
+                                                >
+                                                    <div
+                                                        className={`absolute inset-0 bg-gradient-to-br ${item.hover.join(
+                                                            ' '
+                                                        )} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                                                    />
+                                                    <div className="relative z-10 flex flex-col items-center">
+                                                        {item.icon}
+                                                        <span className="mt-2 text-sm font-medium">{item.label}</span>
+                                                    </div>
+                                                    <div
+                                                        className={`absolute bottom-0 left-0 right-0 h-1 ${item.bar} scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300`}
+                                                    />
+                                                </Link>
+                                            ))}
 
-                                        <button
-                                            onClick={() => setShowCopyDialog(true)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
-                                        >
-                                            <Copy size={16} />
-                                            <span>Copy Subjects</span>
-                                        </button>
-                                    </>
+                                            {/* Copy Subjects button (only admin) */}
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => setShowCopyDialog(true)}
+                                                    className="group relative flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 text-white overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] min-w-[150px]"
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-700 to-purple-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                    <div className="relative z-10 flex flex-col items-center">
+                                                        <Copy size={20} className="group-hover:scale-110 transition-transform duration-300" />
+                                                        <span className="mt-2 text-sm font-medium">Copy Subjects</span>
+                                                    </div>
+                                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-400 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
