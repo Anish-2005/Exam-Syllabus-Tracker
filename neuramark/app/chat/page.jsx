@@ -20,7 +20,23 @@ import {
     arrayRemove,
     getDoc,
 } from "firebase/firestore"
-import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+
+// Components
+import NavigationBar from "./components/NavigationBar"
+import Sidebar from "./components/Sidebar"
+import RoomList from "./components/RoomList"
+import MobileRoomList from "./components/MobileRoomList"
+import ChatArea from "./components/ChatArea"
+import CreateRoomModal from "./components/CreateRoomModal"
+import JoinRoomModal from "./components/JoinRoomModal"
+import MembersModal from "./components/MembersModal"
+import PendingRequestsModal from "./components/PendingRequestsModal"
+import RoomSettingsModal from "./components/RoomSettingsModal"
+
+// Icons
 import {
     User,
     Moon,
@@ -42,9 +58,6 @@ import {
     EyeOff,
     Key,
 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
 
 // Generate random room code
 const generateRoomCode = () => {
@@ -96,6 +109,7 @@ export default function ChatPage() {
             setIsSuperAdmin(true)
         }
     }, [user])
+
     // Load all chat rooms the user is part of or has access to
     useEffect(() => {
         const loadRooms = async () => {
@@ -305,9 +319,9 @@ export default function ChatPage() {
                 photoURL: user.photoURL || null,
                 userId: user.uid,
                 timestamp: serverTimestamp(),
-                isAdmin: !!(isSuperAdmin || currentRoom.admin === user.uid),  // always boolean
-                isModerator: !!currentRoom.moderators?.includes(user.uid),    // always boolean
-                role: userRole || "member",                                   // always string
+                isAdmin: !!(isSuperAdmin || currentRoom.admin === user.uid),
+                isModerator: !!currentRoom.moderators?.includes(user.uid),
+                role: userRole || "member",
             };
 
             const targetCollection =
@@ -321,8 +335,6 @@ export default function ChatPage() {
             console.error("Error sending message:", error);
         }
     };
-
-
 
     const createNewRoom = async () => {
         if (!newRoomName.trim() || !user) return
@@ -456,7 +468,7 @@ export default function ChatPage() {
         try {
             await updateDoc(doc(db, "chatRooms", currentRoom.id), {
                 members: arrayRemove(userId),
-                moderators: arrayRemove(userId), // Also remove from moderators if they were one
+                moderators: arrayRemove(userId),
             })
         } catch (error) {
             console.error("Error removing user from room:", error)
@@ -501,7 +513,7 @@ export default function ChatPage() {
         try {
             await updateDoc(doc(db, "chatRooms", currentRoom.id), {
                 admin: newAdminId,
-                moderators: arrayRemove(newAdminId), // Remove from moderators if they were one
+                moderators: arrayRemove(newAdminId),
             })
 
             setShowRoomSettings(false)
@@ -575,1084 +587,196 @@ export default function ChatPage() {
                 }
             >
                 <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
-                    {/* Enhanced Header */}
-                    <nav className={`${isDark ? "bg-gray-800" : "bg-white"} shadow-sm ${borderColor} border-b sticky top-0 z-50`}>
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex justify-between items-center h-16">
-                                <div className="flex items-center space-x-3">
-                                    {!showRoomList && (
-                                        <button
-                                            onClick={() => setShowRoomList(true)}
-                                            className={`p-2 rounded-full ${hoverBg} transition-colors`}
-                                            aria-label="Back to Rooms"
-                                        >
-                                            <ChevronLeft className={`w-5 h-5 ${textColor}`} />
-                                        </button>
-                                    )}
+                    <NavigationBar
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        hoverBg={hoverBg}
+                        toggleTheme={toggleTheme}
+                        isSuperAdmin={isSuperAdmin}
+                        currentRoom={currentRoom}
+                        pendingRequests={pendingRequests}
+                        canManageRequests={canManageRequests}
+                        showRoomList={showRoomList}
+                        setShowRoomList={setShowRoomList}
+                        setSidebarOpen={setSidebarOpen}
+                        setShowPendingRequestsModal={setShowPendingRequestsModal}
+                        setShowMembersModal={setShowMembersModal}
+                    />
 
-                                    <div className="flex items-center space-x-2">
-                                        <Image src="/emblem.png" alt="Logo" width={32} height={32} className="rounded-sm" />
-                                        <h1 className={`text-xl font-bold ${textColor}`}>Study Chat</h1>
-                                        {isSuperAdmin && (
-                                            <span className="px-2 py-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-xs rounded-full">
-                                                ADMIN
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Desktop Controls */}
-                                <div className="hidden md:flex items-center space-x-4">
-                                    {currentRoom &&
-                                        canManageRequests() &&
-                                        currentRoom.type === "private" &&
-                                        pendingRequests.length > 0 && (
-                                            <button
-                                                onClick={() => setShowPendingRequestsModal(true)}
-                                                className={`flex items-center text-sm ${isDark ? "text-amber-400 hover:text-amber-300" : "text-amber-600 hover:text-amber-700"} px-3 py-1 rounded-md ${isDark ? "hover:bg-gray-700" : "hover:bg-amber-50"} transition-colors`}
-                                            >
-                                                <Clock className="w-4 h-4 mr-2" />
-                                                <span>Requests ({pendingRequests.length})</span>
-                                            </button>
-                                        )}
-
-                                    {currentRoom && !currentRoom.isGlobal && (
-                                        <button
-                                            onClick={() => setShowMembersModal(true)}
-                                            className={`flex items-center text-sm ${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"} px-3 py-1 rounded-md ${isDark ? "hover:bg-gray-700" : "hover:bg-blue-50"} transition-colors`}
-                                        >
-                                            <Users className="w-4 h-4 mr-2" />
-                                            <span>Members</span>
-                                        </button>
-                                    )}
-
-                                    <button
-                                        onClick={toggleTheme}
-                                        className={`p-2 rounded-full ${isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-100 hover:bg-gray-200"} transition-colors`}
-                                    >
-                                        {isDark ? <Sun className="w-5 h-5 text-amber-300" /> : <Moon className="w-5 h-5 text-indigo-600" />}
-                                    </button>
-
-                                    <div className="flex items-center space-x-2 ml-2">
-                                        {user?.photoURL ? (
-                                            <Image
-                                                src={user.photoURL || "/placeholder.svg"}
-                                                alt={user.displayName || "User"}
-                                                width={32}
-                                                height={32}
-                                                className="rounded-full"
-                                            />
-                                        ) : (
-                                            <div
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? "bg-indigo-900 text-indigo-300" : "bg-indigo-100 text-indigo-700"}`}
-                                            >
-                                                <User className="w-4 h-4" />
-                                            </div>
-                                        )}
-                                        <span className={`text-sm ${textColor} hidden lg:inline`}>
-                                            {user?.displayName || user?.email?.split("@")[0]}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Mobile Controls */}
-                                <div className="flex md:hidden items-center space-x-3">
-                                    <button
-                                        onClick={toggleTheme}
-                                        className={`p-2 rounded-full ${isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-100 hover:bg-gray-200"} transition-colors`}
-                                    >
-                                        {isDark ? <Sun className="w-5 h-5 text-amber-300" /> : <Moon className="w-5 h-5 text-indigo-600" />}
-                                    </button>
-
-                                    <button onClick={() => setSidebarOpen(true)} className={`p-2 rounded-full ${hoverBg}`}>
-                                        <Menu className={`w-5 h-5 ${textColor}`} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </nav>
-
-                    {/* Mobile Sidebar */}
-                    <AnimatePresence>
-                        {sidebarOpen && (
-                            <>
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-                                    onClick={() => setSidebarOpen(false)}
-                                />
-
-                                <motion.div
-                                    initial={{ x: "-100%" }}
-                                    animate={{ x: 0 }}
-                                    exit={{ x: "-100%" }}
-                                    transition={{ type: "tween", duration: 0.3 }}
-                                    className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] ${cardBg} shadow-xl flex flex-col`}
-                                >
-                                    <div className={`flex items-center justify-between p-4 border-b ${borderColor}`}>
-                                        <div className="flex items-center space-x-2">
-                                            <Image src="/emblem.png" alt="Logo" width={32} height={32} className="rounded-sm" />
-                                            <h2 className={`text-lg font-bold ${textColor}`}>Menu</h2>
-                                        </div>
-                                        <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-full ${hoverBg}`}>
-                                            <X className={`w-5 h-5 ${textColor}`} />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-1">
-                                        <Link
-                                            href="/dashboard"
-                                            className={`flex items-center px-3 py-2 rounded-md ${hoverBg} ${router.pathname === "/dashboard" ? (isDark ? "bg-indigo-900 text-white" : "bg-indigo-100 text-indigo-700") : ""}`}
-                                        >
-                                            Dashboard
-                                        </Link>
-                                        <Link
-                                            href="/chat"
-                                            className={`flex items-center px-3 py-2 rounded-md ${hoverBg} ${router.pathname === "/chat" ? (isDark ? "bg-indigo-900 text-white" : "bg-indigo-100 text-indigo-700") : ""}`}
-                                        >
-                                            Chat
-                                        </Link>
-
-                                        {/* Mobile-only Room Controls */}
-                                        <button
-                                            onClick={() => {
-                                                setShowJoinRoomModal(true)
-                                                setSidebarOpen(false)
-                                            }}
-                                            className={`flex items-center w-full px-3 py-2 rounded-md ${isDark ? "bg-emerald-700 hover:bg-emerald-600" : "bg-emerald-600 hover:bg-emerald-700"} text-white`}
-                                        >
-                                            <Key className="w-4 h-4 mr-2" />
-                                            Join Room
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                setShowCreateRoomModal(true)
-                                                setSidebarOpen(false)
-                                            }}
-                                            className={`flex items-center w-full px-3 py-2 rounded-md ${isDark ? "bg-indigo-700 hover:bg-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white`}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Create Room
-                                        </button>
-
-                                        {currentRoom &&
-                                            canManageRequests() &&
-                                            currentRoom.type === "private" &&
-                                            pendingRequests.length > 0 && (
-                                                <button
-                                                    onClick={() => {
-                                                        setShowPendingRequestsModal(true)
-                                                        setSidebarOpen(false)
-                                                    }}
-                                                    className={`flex items-center w-full px-3 py-2 rounded-md ${hoverBg}`}
-                                                >
-                                                    <Clock className="w-4 h-4 mr-2" />
-                                                    <span>Requests ({pendingRequests.length})</span>
-                                                </button>
-                                            )}
-
-                                        {currentRoom && !currentRoom.isGlobal && (
-                                            <button
-                                                onClick={() => {
-                                                    setShowMembersModal(true)
-                                                    setSidebarOpen(false)
-                                                }}
-                                                className={`flex items-center w-full px-3 py-2 rounded-md ${hoverBg}`}
-                                            >
-                                                <Users className="w-4 h-4 mr-2" />
-                                                <span>Members ({currentRoomMembers.length})</span>
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className={`p-4 border-t ${borderColor}`}>
-                                        <div className="flex items-center space-x-3 mb-4">
-                                            {user?.photoURL ? (
-                                                <Image
-                                                    src={user.photoURL || "/placeholder.svg"}
-                                                    alt={user.displayName || "User"}
-                                                    width={40}
-                                                    height={40}
-                                                    className="rounded-full"
-                                                />
-                                            ) : (
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? "bg-indigo-900 text-indigo-300" : "bg-indigo-100 text-indigo-700"}`}
-                                                >
-                                                    <User className="w-5 h-5" />
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className={`font-medium ${textColor}`}>{user?.displayName || user?.email?.split("@")[0]}</p>
-                                                <p className={`text-xs ${secondaryText}`}>{user?.email}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={logout}
-                                            className="w-full py-2 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 transition-colors"
-                                        >
-                                            Logout
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            </>
-                        )}
-                    </AnimatePresence>
+                    <Sidebar
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        hoverBg={hoverBg}
+                        cardBg={cardBg}
+                        sidebarOpen={sidebarOpen}
+                        setSidebarOpen={setSidebarOpen}
+                        user={user}
+                        logout={logout}
+                        setShowJoinRoomModal={setShowJoinRoomModal}
+                        setShowCreateRoomModal={setShowCreateRoomModal}
+                        currentRoom={currentRoom}
+                        pendingRequests={pendingRequests}
+                        setShowPendingRequestsModal={setShowPendingRequestsModal}
+                        setShowMembersModal={setShowMembersModal}
+                        canManageRequests={canManageRequests}
+                    />
 
                     {/* Main Content */}
                     <main className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
                         <div className="flex h-[calc(100vh-80px)]">
-                            {/* Room List Sidebar - Desktop */}
-                            {showRoomList && (
-                                <motion.div
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    exit={{ x: -20, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className={`hidden md:flex w-72 flex-shrink-0 ${cardBg} rounded-lg shadow ${borderColor} border mr-6 flex-col overflow-hidden`}
-                                >
-                                    <div className="p-4 border-b ${borderColor}">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h2 className={`text-lg font-semibold ${textColor}`}>Chat Rooms</h2>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => setShowJoinRoomModal(true)}
-                                                    className={`p-2 rounded-full ${isDark ? "bg-emerald-700 hover:bg-emerald-600" : "bg-emerald-600 hover:bg-emerald-700"} text-white`}
-                                                    title="Join room"
-                                                >
-                                                    <Key className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowCreateRoomModal(true)}
-                                                    className={`p-2 rounded-full ${isDark ? "bg-indigo-700 hover:bg-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white`}
-                                                    title="Create room"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
+                            <RoomList
+                                isDark={isDark}
+                                textColor={textColor}
+                                secondaryText={secondaryText}
+                                borderColor={borderColor}
+                                hoverBg={hoverBg}
+                                inputBg={inputBg}
+                                cardBg={cardBg}
+                                filteredRooms={filteredRooms}
+                                currentRoom={currentRoom}
+                                setCurrentRoom={setCurrentRoom}
+                                setShowRoomList={setShowRoomList}
+                                setShowCreateRoomModal={setShowCreateRoomModal}
+                                setShowJoinRoomModal={setShowJoinRoomModal}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                showRoomList={showRoomList}
+                            />
 
-                                        <div className="relative">
-                                            <Search className={`absolute left-3 top-3 ${secondaryText} w-4 h-4`} />
-                                            <input
-                                                type="text"
-                                                placeholder="Search rooms..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className={`w-full pl-10 pr-4 py-2 rounded-lg ${inputBg} focus:outline-none focus:ring-2 ${isDark ? "focus:ring-indigo-500" : "focus:ring-indigo-300"} ${borderColor} border text-sm`}
-                                            />
-                                        </div>
-                                    </div>
+                            <MobileRoomList
+                                isDark={isDark}
+                                textColor={textColor}
+                                secondaryText={secondaryText}
+                                borderColor={borderColor}
+                                hoverBg={hoverBg}
+                                inputBg={inputBg}
+                                cardBg={cardBg}
+                                filteredRooms={filteredRooms}
+                                currentRoom={currentRoom}
+                                setCurrentRoom={setCurrentRoom}
+                                setShowRoomList={setShowRoomList}
+                                setShowCreateRoomModal={setShowCreateRoomModal}
+                                setShowJoinRoomModal={setShowJoinRoomModal}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                showRoomList={showRoomList}
+                            />
 
-                                    <div className="flex-1 overflow-y-auto">
-                                        {filteredRooms.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                                                <MessageCircle className={`w-10 h-10 mb-4 ${secondaryText}`} />
-                                                <p className={`${textColor} mb-2`}>No rooms found</p>
-                                                <p className={`text-sm ${secondaryText} mb-4`}>Create or join a room to get started</p>
-                                                <div className="flex space-x-3 w-full">
-                                                    <button
-                                                        onClick={() => setShowCreateRoomModal(true)}
-                                                        className={`flex-1 py-2 ${isDark ? "bg-indigo-700 hover:bg-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white rounded-md text-sm`}
-                                                    >
-                                                        Create
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setShowJoinRoomModal(true)}
-                                                        className={`flex-1 py-2 ${isDark ? "bg-emerald-700 hover:bg-emerald-600" : "bg-emerald-600 hover:bg-emerald-700"} text-white rounded-md text-sm`}
-                                                    >
-                                                        Join
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <ul className="divide-y ${borderColor}">
-                                                {filteredRooms.map((room) => (
-                                                    <li key={room.id}>
-                                                        <button
-                                                            onClick={() => {
-                                                                setCurrentRoom(room)
-                                                                setShowRoomList(false)
-                                                            }}
-                                                            className={`w-full text-left p-3 ${hoverBg} ${currentRoom?.id === room.id ? (isDark ? "bg-gray-700" : "bg-gray-100") : ""} transition-colors`}
-                                                        >
-                                                            <div className="flex items-start">
-                                                                <div
-                                                                    className={`flex-shrink-0 h-10 w-10 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-100"} flex items-center justify-center`}
-                                                                >
-                                                                    <Users className={`${isDark ? "text-gray-400" : "text-gray-500"} w-5 h-5`} />
-                                                                </div>
-                                                                <div className="ml-3 flex-1 min-w-0">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <p className={`text-sm font-medium ${textColor} truncate`}>{room.name}</p>
-                                                                        {room.isGlobal && (
-                                                                            <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded">
-                                                                                Global
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="flex items-center mt-1 space-x-2">
-                                                                        <span className={`text-xs ${secondaryText}`}>
-                                                                            {room.members?.length || 0} members
-                                                                        </span>
-                                                                        {room.code && (
-                                                                            <span className={`text-xs font-mono ${secondaryText}`}>{room.code}</span>
-                                                                        )}
-                                                                        {room.type === "private" && <EyeOff className={`w-3 h-3 ${secondaryText}`} />}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* Mobile Room List Overlay */}
-                            <AnimatePresence>
-                                {showRoomList && (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-                                        onClick={() => setShowRoomList(false)}
-                                    >
-                                        <motion.div
-                                            initial={{ y: "100%" }}
-                                            animate={{ y: 0 }}
-                                            exit={{ y: "100%" }}
-                                            transition={{ type: "spring", damping: 30 }}
-                                            className={`absolute bottom-0 left-0 right-0 ${cardBg} rounded-t-2xl shadow-xl max-h-[80vh] flex flex-col`}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <div className="p-4 border-b ${borderColor}">
-                                                <div className="flex justify-between items-center mb-3">
-                                                    <h2 className={`text-lg font-semibold ${textColor}`}>Chat Rooms</h2>
-                                                    <button onClick={() => setShowRoomList(false)} className={`p-1 rounded-full ${hoverBg}`}>
-                                                        <X className={`w-5 h-5 ${textColor}`} />
-                                                    </button>
-                                                </div>
-
-                                                <div className="relative">
-                                                    <Search className={`absolute left-3 top-3 ${secondaryText} w-4 h-4`} />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search rooms..."
-                                                        value={searchQuery}
-                                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                                        className={`w-full pl-10 pr-4 py-2 rounded-lg ${inputBg} focus:outline-none focus:ring-2 ${isDark ? "focus:ring-indigo-500" : "focus:ring-indigo-300"} ${borderColor} border text-sm`}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex-1 overflow-y-auto p-2">
-                                                {filteredRooms.length === 0 ? (
-                                                    <div className="flex flex-col items-center justify-center h-64 text-center p-4">
-                                                        <MessageCircle className={`w-12 h-12 mb-4 ${secondaryText}`} />
-                                                        <p className={`${textColor} mb-2`}>No rooms available</p>
-                                                        <p className={`text-sm ${secondaryText} mb-6`}>Create a new room or join with a code</p>
-                                                        <div className="flex space-x-3 w-full">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setShowCreateRoomModal(true)
-                                                                    setShowRoomList(false)
-                                                                }}
-                                                                className={`flex-1 py-2 ${isDark ? "bg-indigo-700 hover:bg-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white rounded-md text-sm`}
-                                                            >
-                                                                Create Room
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setShowJoinRoomModal(true)
-                                                                    setShowRoomList(false)
-                                                                }}
-                                                                className={`flex-1 py-2 ${isDark ? "bg-emerald-700 hover:bg-emerald-600" : "bg-emerald-600 hover:bg-emerald-700"} text-white rounded-md text-sm`}
-                                                            >
-                                                                Join Room
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <ul className="divide-y ${borderColor}">
-                                                        {filteredRooms.map((room) => (
-                                                            <li key={room.id}>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setCurrentRoom(room)
-                                                                        setShowRoomList(false)
-                                                                    }}
-                                                                    className={`w-full text-left p-3 ${hoverBg} ${currentRoom?.id === room.id ? (isDark ? "bg-gray-700" : "bg-gray-100") : ""} transition-colors`}
-                                                                >
-                                                                    <div className="flex items-center">
-                                                                        <div
-                                                                            className={`flex-shrink-0 h-10 w-10 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-100"} flex items-center justify-center`}
-                                                                        >
-                                                                            <Users className={`${isDark ? "text-gray-400" : "text-gray-500"} w-5 h-5`} />
-                                                                        </div>
-                                                                        <div className="ml-3 flex-1 min-w-0">
-                                                                            <p className={`text-sm font-medium ${textColor} truncate`}>{room.name}</p>
-                                                                            <div className="flex items-center mt-1 space-x-2">
-                                                                                <span className={`text-xs ${secondaryText}`}>
-                                                                                    {room.members?.length || 0} members
-                                                                                </span>
-                                                                                {room.code && (
-                                                                                    <span className={`text-xs font-mono ${secondaryText}`}>{room.code}</span>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                        {room.isGlobal && (
-                                                                            <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded">
-                                                                                Global
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </button>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-                                            </div>
-                                        </motion.div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Chat Area */}
-                            <div className={`flex-1 ${cardBg} rounded-lg shadow ${borderColor} border overflow-hidden flex flex-col`}>
-                                {!currentRoom ? (
-                                    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                                        <MessageCircle className={`w-16 h-16 mb-6 ${secondaryText}`} />
-                                        <h3 className={`text-xl font-medium ${textColor} mb-2`}>
-                                            {showRoomList ? "Select a chat room" : "No room selected"}
-                                        </h3>
-                                        <p className={`max-w-md ${secondaryText} mb-6`}>
-                                            {showRoomList
-                                                ? "Choose from your available rooms or create a new one"
-                                                : "Browse rooms to start chatting"}
-                                        </p>
-                                        <div className="flex space-x-3">
-                                            {!showRoomList && (
-                                                <button
-                                                    onClick={() => setShowRoomList(true)}
-                                                    className={`px-4 py-2 ${isDark ? "bg-indigo-700 hover:bg-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white rounded-md`}
-                                                >
-                                                    Browse Rooms
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => setShowCreateRoomModal(true)}
-                                                className={`px-4 py-2 ${isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"} rounded-md ${textColor}`}
-                                            >
-                                                Create Room
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Room Header */}
-                                        <div className={`p-4 border-b ${borderColor} flex justify-between items-center`}>
-                                            <div className="flex items-center">
-                                                <button
-                                                    onClick={() => setShowRoomList(true)}
-                                                    className="md:hidden mr-3 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                                                >
-                                                    <ChevronLeft className={`w-5 h-5 ${textColor}`} />
-                                                </button>
-                                                <div>
-                                                    <div className="flex items-center">
-                                                        <h2 className={`text-lg font-semibold ${textColor}`}>{currentRoom.name}</h2>
-                                                        {currentRoom.isGlobal && (
-                                                            <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded">Global</span>
-                                                        )}
-                                                        {currentRoom.type === "private" && <EyeOff className={`ml-2 w-4 h-4 ${secondaryText}`} />}
-                                                        {getRoleBadge(getUserRole())}
-                                                    </div>
-                                                    {currentRoom.code && (
-                                                        <div className="flex items-center mt-1">
-                                                            <span className={`text-xs font-mono ${secondaryText}`}>Code: {currentRoom.code}</span>
-                                                            <button
-                                                                onClick={() => copyRoomCode(currentRoom.code)}
-                                                                className="ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                                                            >
-                                                                {copiedCode ? (
-                                                                    <Check className="w-3 h-3 text-green-500" />
-                                                                ) : (
-                                                                    <Copy className="w-3 h-3 text-gray-500" />
-                                                                )}
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex space-x-2">
-                                                {canManageRequests() && currentRoom.type === "private" && pendingRequests.length > 0 && (
-                                                    <button
-                                                        onClick={() => setShowPendingRequestsModal(true)}
-                                                        className={`p-2 rounded-full ${isDark ? "bg-amber-800/30 hover:bg-amber-800/40" : "bg-amber-100 hover:bg-amber-200"} relative`}
-                                                    >
-                                                        <Clock className={`w-4 h-4 ${isDark ? "text-amber-400" : "text-amber-600"}`} />
-                                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                                            {pendingRequests.length}
-                                                        </span>
-                                                    </button>
-                                                )}
-
-                                                {!currentRoom.isGlobal && (
-                                                    <>
-                                                        <button onClick={() => setShowMembersModal(true)} className={`p-2 rounded-full ${hoverBg}`}>
-                                                            <Users className={`w-4 h-4 ${textColor}`} />
-                                                        </button>
-                                                        {getUserRole() !== "member" && (
-                                                            <button
-                                                                onClick={() => setShowRoomSettings(true)}
-                                                                className={`p-2 rounded-full ${hoverBg}`}
-                                                            >
-                                                                <Shield className={`w-4 h-4 ${textColor}`} />
-                                                            </button>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Messages Container */}
-                                        <div className="flex-1 overflow-y-auto p-4">
-                                            {loading ? (
-                                                <div className="flex justify-center items-center h-full">
-                                                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
-                                                </div>
-                                            ) : messages.length === 0 ? (
-                                                <div className="flex flex-col items-center justify-center h-full text-center">
-                                                    <MessageCircle className={`w-12 h-12 mb-4 ${secondaryText}`} />
-                                                    <p className={`text-lg ${textColor}`}>No messages yet</p>
-                                                    <p className={`text-sm ${secondaryText} mt-2`}>Send a message to start the conversation</p>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col-reverse space-y-reverse space-y-4">
-                                                    <div ref={messagesEndRef} />
-                                                    {messages.map((message) => (
-                                                        <motion.div
-                                                            key={message.id}
-                                                            initial={{ opacity: 0, y: 20 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            className={`flex ${message.userId === user?.uid ? "justify-end" : "justify-start"}`}
-                                                        >
-                                                            <div
-                                                                className={`flex max-w-xs sm:max-w-md rounded-xl px-4 py-3 relative
-                                  ${message.userId === user?.uid
-                                                                        ? isDark
-                                                                            ? "bg-indigo-700"
-                                                                            : "bg-indigo-600 text-white"
-                                                                        : isDark
-                                                                            ? "bg-gray-700"
-                                                                            : "bg-gray-100"
-                                                                    }`}
-                                                            >
-                                                                <div className="flex flex-col">
-                                                                    <div className="flex items-center space-x-2">
-                                                                        {message.photoURL ? (
-                                                                            <Image
-                                                                                src={message.photoURL || "/placeholder.svg"}
-                                                                                alt={message.displayName}
-                                                                                width={28}
-                                                                                height={28}
-                                                                                className="rounded-full"
-                                                                            />
-                                                                        ) : (
-                                                                            <div
-                                                                                className={`h-7 w-7 rounded-full flex items-center justify-center ${isDark ? "bg-gray-600" : "bg-gray-200"}`}
-                                                                            >
-                                                                                <span className="text-xs">{message.displayName.charAt(0).toUpperCase()}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        <div className="flex items-center">
-                                                                            <span
-                                                                                className={`font-medium ${message.userId === user?.uid ? "text-white" : textColor}`}
-                                                                            >
-                                                                                {message.displayName}
-                                                                            </span>
-                                                                            {message.isAdmin && (
-                                                                                <span className="ml-1 text-xs bg-red-600 text-white px-1 rounded">ADMIN</span>
-                                                                            )}
-                                                                            {message.isModerator && !message.isAdmin && (
-                                                                                <span className="ml-1 text-xs bg-blue-600 text-white px-1 rounded">MOD</span>
-                                                                            )}
-                                                                        </div>
-                                                                        <span
-                                                                            className={`text-xs ${message.userId === user?.uid ? "text-gray-300" : secondaryText}`}
-                                                                        >
-                                                                            {formatTime(message.timestamp)}
-                                                                        </span>
-                                                                    </div>
-                                                                    <p className={`mt-2 ${message.userId === user?.uid ? "text-white" : textColor}`}>
-                                                                        {message.text}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </motion.div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Message Input */}
-                                        <div className={`border-t ${borderColor} p-4`}>
-                                            <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                                                <input
-                                                    type="text"
-                                                    value={newMessage}
-                                                    onChange={(e) => setNewMessage(e.target.value)}
-                                                    placeholder="Type your message..."
-                                                    className={`flex-1 px-4 py-3 rounded-full ${inputBg} focus:outline-none focus:ring-2 ${isDark ? "focus:ring-indigo-500" : "focus:ring-indigo-300"} ${borderColor} border`}
-                                                    disabled={loading}
-                                                />
-                                                <button
-                                                    type="submit"
-                                                    disabled={!newMessage.trim() || loading}
-                                                    className={`p-3 rounded-full ${newMessage.trim() ? (isDark ? "bg-indigo-600 hover:bg-indigo-500" : "bg-indigo-600 hover:bg-indigo-700") : isDark ? "bg-gray-700" : "bg-gray-200"} text-white transition-colors`}
-                                                >
-                                                    <Send className="w-5 h-5" />
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            <ChatArea
+                                isDark={isDark}
+                                textColor={textColor}
+                                secondaryText={secondaryText}
+                                borderColor={borderColor}
+                                hoverBg={hoverBg}
+                                inputBg={inputBg}
+                                cardBg={cardBg}
+                                currentRoom={currentRoom}
+                                messages={messages}
+                                loading={loading}
+                                newMessage={newMessage}
+                                setNewMessage={setNewMessage}
+                                handleSendMessage={handleSendMessage}
+                                user={user}
+                                messagesEndRef={messagesEndRef}
+                                formatTime={formatTime}
+                                getRoleBadge={getRoleBadge}
+                                getUserRole={getUserRole}
+                                canManageRequests={canManageRequests}
+                                pendingRequests={pendingRequests}
+                                setShowPendingRequestsModal={setShowPendingRequestsModal}
+                                setShowMembersModal={setShowMembersModal}
+                                setShowRoomSettings={setShowRoomSettings}
+                                setShowRoomList={setShowRoomList}
+                                copiedCode={copiedCode}
+                                copyRoomCode={copyRoomCode}
+                            />
                         </div>
                     </main>
 
-                    {/* Create Room Modal */}
-                    <AnimatePresence>
-                        {showCreateRoomModal && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                                onClick={() => setShowCreateRoomModal(false)}
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.9, y: 20 }}
-                                    animate={{ scale: 1, y: 0 }}
-                                    exit={{ scale: 0.9, y: 20 }}
-                                    className={`w-full max-w-md ${cardBg} rounded-lg shadow-xl p-6`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <h3 className={`text-lg font-medium mb-4 ${textColor}`}>Create New Room</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label htmlFor="roomName" className={`block text-sm font-medium mb-1 ${secondaryText}`}>
-                                                Room Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="roomName"
-                                                value={newRoomName}
-                                                onChange={(e) => setNewRoomName(e.target.value)}
-                                                className={`w-full px-3 py-2 rounded-md ${inputBg} focus:outline-none focus:ring-2 focus:ring-indigo-500 ${borderColor} border`}
-                                                placeholder="Enter room name"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className={`block text-sm font-medium mb-1 ${secondaryText}`}>Room Type</label>
-                                            <div className="flex space-x-4">
-                                                <label className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        value="public"
-                                                        checked={newRoomType === "public"}
-                                                        onChange={(e) => setNewRoomType(e.target.value)}
-                                                        className="mr-2"
-                                                    />
-                                                    <span className={textColor}>Public</span>
-                                                </label>
-                                                <label className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        value="private"
-                                                        checked={newRoomType === "private"}
-                                                        onChange={(e) => setNewRoomType(e.target.value)}
-                                                        className="mr-2"
-                                                    />
-                                                    <span className={textColor}>Private</span>
-                                                </label>
-                                            </div>
-                                            <p className={`text-xs mt-1 ${secondaryText}`}>
-                                                {newRoomType === "public"
-                                                    ? "Anyone can join with the room code"
-                                                    : "Users need approval to join"}
-                                            </p>
-                                        </div>
-                                        <div className="flex justify-end space-x-2 pt-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowCreateRoomModal(false)}
-                                                className={`px-4 py-2 rounded-md ${isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"} text-sm`}
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={createNewRoom}
-                                                disabled={!newRoomName.trim()}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                            >
-                                                Create Room
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <CreateRoomModal
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        inputBg={inputBg}
+                        cardBg={cardBg}
+                        showCreateRoomModal={showCreateRoomModal}
+                        setShowCreateRoomModal={setShowCreateRoomModal}
+                        newRoomName={newRoomName}
+                        setNewRoomName={setNewRoomName}
+                        newRoomType={newRoomType}
+                        setNewRoomType={setNewRoomType}
+                        createNewRoom={createNewRoom}
+                    />
 
-                    {/* Join Room Modal */}
-                    <AnimatePresence>
-                        {showJoinRoomModal && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                                onClick={() => setShowJoinRoomModal(false)}
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.9, y: 20 }}
-                                    animate={{ scale: 1, y: 0 }}
-                                    exit={{ scale: 0.9, y: 20 }}
-                                    className={`w-full max-w-md ${cardBg} rounded-lg shadow-xl p-6`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <h3 className={`text-lg font-medium mb-4 ${textColor}`}>Join Room with Code</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label htmlFor="roomCode" className={`block text-sm font-medium mb-1 ${secondaryText}`}>
-                                                Room Code
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="roomCode"
-                                                value={joinRoomCode}
-                                                onChange={(e) => setJoinRoomCode(e.target.value.toUpperCase())}
-                                                className={`w-full px-3 py-2 rounded-md ${inputBg} focus:outline-none focus:ring-2 focus:ring-indigo-500 ${borderColor} border font-mono text-center`}
-                                                placeholder="Enter 6-character code"
-                                                maxLength={6}
-                                            />
-                                            <p className={`text-xs mt-1 ${secondaryText}`}>Enter the 6-character room code to join</p>
-                                        </div>
-                                        <div className="flex justify-end space-x-2 pt-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowJoinRoomModal(false)}
-                                                className={`px-4 py-2 rounded-md ${isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"} text-sm`}
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={joinRoomByCode}
-                                                disabled={joinRoomCode.length !== 6}
-                                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                            >
-                                                Join Room
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <JoinRoomModal
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        inputBg={inputBg}
+                        cardBg={cardBg}
+                        showJoinRoomModal={showJoinRoomModal}
+                        setShowJoinRoomModal={setShowJoinRoomModal}
+                        joinRoomCode={joinRoomCode}
+                        setJoinRoomCode={setJoinRoomCode}
+                        joinRoomByCode={joinRoomByCode}
+                    />
 
-                    {/* Members Modal */}
-                    <AnimatePresence>
-                        {showMembersModal && currentRoom && !currentRoom.isGlobal && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                                onClick={() => setShowMembersModal(false)}
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.9, y: 20 }}
-                                    animate={{ scale: 1, y: 0 }}
-                                    exit={{ scale: 0.9, y: 20 }}
-                                    className={`w-full max-w-lg ${cardBg} rounded-lg shadow-xl p-6 max-h-[80vh] overflow-hidden flex flex-col`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className={`text-lg font-medium ${textColor}`}>Room Members ({currentRoomMembers.length})</h3>
-                                        <button
-                                            onClick={() => setShowMembersModal(false)}
-                                            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                                        >
-                                            <X size={20} />
-                                        </button>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto">
-                                        <div className="space-y-2">
-                                            {currentRoomMembers.map((member) => (
-                                                <div
-                                                    key={member.id}
-                                                    className={`flex items-center justify-between p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-50"}`}
-                                                >
-                                                    <div className="flex items-center space-x-3">
-                                                        {member.photoURL ? (
-                                                            <Image
-                                                                src={member.photoURL || "/placeholder.svg"}
-                                                                alt={member.displayName}
-                                                                width={40}
-                                                                height={40}
-                                                                className="rounded-full"
-                                                            />
-                                                        ) : (
-                                                            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                                                <User size={20} />
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            <p className={`font-medium ${textColor}`}>{member.displayName || member.email}</p>
-                                                            <div className="flex items-center space-x-1">
-                                                                {member.role === "admin" && (
-                                                                    <span className="text-xs bg-green-700 text-white px-2 py-0.5 rounded">Admin</span>
-                                                                )}
-                                                                {member.role === "moderator" && (
-                                                                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded">Moderator</span>
-                                                                )}
-                                                                {member.role === "member" && <span className={`text-xs ${secondaryText}`}>Member</span>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {canManageMembers() && member.id !== user?.uid && member.role !== "admin" && (
-                                                        <div className="flex space-x-1">
-                                                            {canManageRoles() && member.role === "member" && (
-                                                                <button
-                                                                    onClick={() => makeUserModerator(member.id)}
-                                                                    className="p-1.5 rounded text-xs bg-blue-500 text-white hover:bg-blue-600"
-                                                                    title="Make moderator"
-                                                                >
-                                                                    <UserPlus size={14} />
-                                                                </button>
-                                                            )}
-                                                            {canManageRoles() && member.role === "moderator" && (
-                                                                <button
-                                                                    onClick={() => removeUserModerator(member.id)}
-                                                                    className="p-1.5 rounded text-xs bg-gray-500 text-white hover:bg-gray-600"
-                                                                    title="Remove moderator"
-                                                                >
-                                                                    <UserMinus size={14} />
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => removeUserFromRoom(member.id)}
-                                                                className="p-1.5 rounded text-xs bg-red-500 text-white hover:bg-red-600"
-                                                                title="Remove from room"
-                                                            >
-                                                                <X size={14} />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <MembersModal
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        cardBg={cardBg}
+                        showMembersModal={showMembersModal}
+                        setShowMembersModal={setShowMembersModal}
+                        currentRoomMembers={currentRoomMembers}
+                        currentRoom={currentRoom}
+                        user={user}
+                        canManageMembers={canManageMembers}
+                        canManageRoles={canManageRoles}
+                        makeUserModerator={makeUserModerator}
+                        removeUserModerator={removeUserModerator}
+                        removeUserFromRoom={removeUserFromRoom}
+                    />
 
-                    {/* Pending Requests Modal */}
-                    <AnimatePresence>
-                        {showPendingRequestsModal && currentRoom && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                                onClick={() => setShowPendingRequestsModal(false)}
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.9, y: 20 }}
-                                    animate={{ scale: 1, y: 0 }}
-                                    exit={{ scale: 0.9, y: 20 }}
-                                    className={`w-full max-w-lg ${cardBg} rounded-lg shadow-xl p-6 max-h-[80vh] overflow-hidden flex flex-col`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className={`text-lg font-medium ${textColor}`}>
-                                            Pending Join Requests ({pendingRequests.length})
-                                        </h3>
-                                        <button
-                                            onClick={() => setShowPendingRequestsModal(false)}
-                                            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                                        >
-                                            <X size={20} />
-                                        </button>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto">
-                                        {pendingRequests.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center h-32 text-center">
-                                                <Clock size={32} className="text-gray-400 mb-2" />
-                                                <p className={`${secondaryText}`}>No pending requests</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3">
-                                                {pendingRequests.map((request) => (
-                                                    <div
-                                                        key={request.id}
-                                                        className={`flex items-center justify-between p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-50"}`}
-                                                    >
-                                                        <div className="flex items-center space-x-3">
-                                                            {request.userDetails.photoURL ? (
-                                                                <Image
-                                                                    src={request.userDetails.photoURL || "/placeholder.svg"}
-                                                                    alt={request.userDetails.displayName}
-                                                                    width={40}
-                                                                    height={40}
-                                                                    className="rounded-full"
-                                                                />
-                                                            ) : (
-                                                                <div className="h-10 w-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                                                    <User size={20} />
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <p className={`font-medium ${textColor}`}>
-                                                                    {request.userDetails.displayName || request.userDetails.email}
-                                                                </p>
-                                                                <p className={`text-xs ${secondaryText}`}>
-                                                                    Requested {request.requestedAt?.toDate?.()?.toLocaleDateString()}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex space-x-2">
-                                                            <button
-                                                                onClick={() => handleJoinRequest(request.id, "approve")}
-                                                                className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
-                                                            >
-                                                                Approve
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleJoinRequest(request.id, "reject")}
-                                                                className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <PendingRequestsModal
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        cardBg={cardBg}
+                        showPendingRequestsModal={showPendingRequestsModal}
+                        setShowPendingRequestsModal={setShowPendingRequestsModal}
+                        pendingRequests={pendingRequests}
+                        handleJoinRequest={handleJoinRequest}
+                    />
 
-                    {/* Room Settings Modal */}
-                    <AnimatePresence>
-                        {showRoomSettings && currentRoom && !currentRoom.isGlobal && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                                onClick={() => setShowRoomSettings(false)}
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.9, y: 20 }}
-                                    animate={{ scale: 1, y: 0 }}
-                                    exit={{ scale: 0.9, y: 20 }}
-                                    className={`w-full max-w-md ${cardBg} rounded-lg shadow-xl p-6`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <h3 className={`text-lg font-medium mb-4 ${textColor}`}>Room Settings</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h4 className={`text-sm font-medium mb-2 ${secondaryText}`}>Room Information</h4>
-                                            <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-50"}`}>
-                                                <p className={`text-sm ${textColor}`}>
-                                                    <span className="font-medium">Name:</span> {currentRoom.name}
-                                                </p>
-                                                <p className={`text-sm ${textColor}`}>
-                                                    <span className="font-medium">Code:</span> {currentRoom.code}
-                                                </p>
-                                                <p className={`text-sm ${textColor}`}>
-                                                    <span className="font-medium">Type:</span> {currentRoom.type}
-                                                </p>
-                                                <p className={`text-sm ${textColor}`}>
-                                                    <span className="font-medium">Members:</span> {currentRoom.members?.length || 0}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {canManageRoles() && (
-                                            <div>
-                                                <h4 className={`text-sm font-medium mb-2 ${secondaryText}`}>Transfer Admin Rights</h4>
-                                                <select
-                                                    value={newAdminId}
-                                                    onChange={(e) => setNewAdminId(e.target.value)}
-                                                    className={`w-full px-3 py-2 rounded-md ${inputBg} focus:outline-none focus:ring-2 focus:ring-indigo-500 ${borderColor} border`}
-                                                >
-                                                    <option value="">Select new admin</option>
-                                                    {currentRoomMembers
-                                                        ?.filter((member) => member.id !== user?.uid)
-                                                        .map((member) => (
-                                                            <option key={member.id} value={member.id}>
-                                                                {member.displayName || member.email}
-                                                            </option>
-                                                        ))}
-                                                </select>
-                                            </div>
-                                        )}
-                                        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                            {currentRoom.admin === user?.uid || isSuperAdmin ? (
-                                                <button
-                                                    onClick={() => deleteRoom(currentRoom.id)}
-                                                    className="w-full px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                                                >
-                                                    Delete Room
-                                                </button>
-                                            ) : null}
-
-                                            <button
-                                                onClick={() => leaveRoom(currentRoom.id)}
-                                                className="w-full px-4 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                                            >
-                                                Leave Room
-                                            </button>
-                                        </div>
-                                        <div className="flex justify-end space-x-2 pt-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowRoomSettings(false)}
-                                                className={`px-4 py-2 rounded-md ${isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"} text-sm`}
-                                            >
-                                                Cancel
-                                            </button>
-                                            {canManageRoles() && newAdminId && (
-                                                <button
-                                                    type="button"
-                                                    onClick={transferAdmin}
-                                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
-                                                >
-                                                    Transfer Admin
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <RoomSettingsModal
+                        isDark={isDark}
+                        textColor={textColor}
+                        secondaryText={secondaryText}
+                        borderColor={borderColor}
+                        inputBg={inputBg}
+                        cardBg={cardBg}
+                        showRoomSettings={showRoomSettings}
+                        setShowRoomSettings={setShowRoomSettings}
+                        currentRoom={currentRoom}
+                        currentRoomMembers={currentRoomMembers}
+                        user={user}
+                        isSuperAdmin={isSuperAdmin}
+                        newAdminId={newAdminId}
+                        setNewAdminId={setNewAdminId}
+                        canManageRoles={canManageRoles}
+                        transferAdmin={transferAdmin}
+                        deleteRoom={deleteRoom}
+                        leaveRoom={leaveRoom}
+                    />
                 </div>
             </Suspense>
         </ProtectedRoute>
