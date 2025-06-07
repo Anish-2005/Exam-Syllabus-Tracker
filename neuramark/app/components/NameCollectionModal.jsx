@@ -1,7 +1,7 @@
 // components/NameCollectionModal.js
 'use client'
 import { useState } from 'react';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function NameCollectionModal({ onComplete, onClose }) {

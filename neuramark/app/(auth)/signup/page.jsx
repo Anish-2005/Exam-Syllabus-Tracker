@@ -2,15 +2,15 @@
 'use client'
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../components/context/AuthContext';
-import { useTheme } from '../../components/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import Link from 'next/link';
 import { Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import NameCollectionModal from '../../components/NameCollectionModal';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/app/components/lib/firebase';
+import { db } from '@/app/lib/firebase';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');

@@ -1,7 +1,7 @@
 // app/about/page.js
 'use client'
 import Link from 'next/link'
-import { useTheme } from '../components/ThemeContext'
+import { useTheme } from '../context/ThemeContext'
 import { ArrowLeft, BookOpen, CheckCircle, Layers, BarChart2, Users, FileText, Moon, Sun } from 'lucide-react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'

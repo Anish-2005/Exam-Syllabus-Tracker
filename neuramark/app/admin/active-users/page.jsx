@@ -1,14 +1,14 @@
 // app/admin/active-users/page.js
 'use client'
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { useAuth } from '@/app/components/context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
-import { useTheme } from '@/app/components/ThemeContext';
+import { useTheme } from '@/app/context/ThemeContext';
 import { Menu,Sun, Moon, RefreshCw, ArrowLeft, User, Mail, Calendar, Clock, BookOpen, CheckCircle, ChevronDown, ChevronUp,X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { db } from '@/app/components/lib/firebase';
+import { db } from '@/app/lib/firebase';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 

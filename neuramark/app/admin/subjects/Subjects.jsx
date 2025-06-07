@@ -1,10 +1,10 @@
 'use client'
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { useAuth } from '@/app/components/context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/app/components/lib/firebase';
-import { useTheme } from '@/app/components/ThemeContext';
+import { db } from '@/app/lib/firebase';
+import { useTheme } from '@/app/context/ThemeContext';
 import {User,RefreshCw,Menu, Moon, Sun, Trash2, Edit, ArrowLeft ,X} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';

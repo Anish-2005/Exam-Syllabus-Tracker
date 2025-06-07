@@ -1,8 +1,8 @@
 // components/NavigationBar.jsx
 "use client"
 
-import { useTheme } from "@/app/components/ThemeContext"
-import { useAuth } from "@/app/components/context/AuthContext"
+import { useTheme } from "@/app/context/ThemeContext"
+import { useAuth } from "@/app/context/AuthContext"
 import { Moon, Sun, Users, Clock, ChevronLeft, Menu } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"

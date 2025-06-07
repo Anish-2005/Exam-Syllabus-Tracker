@@ -2,11 +2,11 @@
 'use client'
 import { Suspense } from 'react';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { useAuth } from '../../components/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../components/lib/firebase';
-import { useTheme } from '../../components/ThemeContext';
+import { db } from '../../lib/firebase';
+import { useTheme } from '../../context/ThemeContext';
 import { MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'

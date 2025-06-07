@@ -1,9 +1,9 @@
 "use client"
 import { Suspense, useEffect, useState, useRef } from "react"
 import ProtectedRoute from "../components/ProtectedRoute"
-import { useAuth } from "../components/context/AuthContext"
-import { useTheme } from "../components/ThemeContext"
-import { db } from "../components/lib/firebase"
+import { useAuth } from "../context/AuthContext"
+import { useTheme } from "../context/ThemeContext"
+import { db } from "../lib/firebase"
 import {
     collection,
     query,

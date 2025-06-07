@@ -2,8 +2,8 @@
 'use client'
 import { useState,useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../components/context/AuthContext';
-import { useTheme } from '../../components/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import Link from 'next/link';
 import { Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

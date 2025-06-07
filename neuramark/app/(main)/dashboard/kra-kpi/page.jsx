@@ -1,13 +1,13 @@
 'use client'
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { useAuth } from '@/app/components/context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { useTheme } from '@/app/components/ThemeContext';
+import { useTheme } from '@/app/context/ThemeContext';
 import { Sun, Moon, BookOpen, ChevronDown, ChevronUp, RefreshCw, User, BarChart2, Target, Award, TrendingUp, X, Menu } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { db } from '@/app/components/lib/firebase';
+import { db } from '@/app/lib/firebase';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';

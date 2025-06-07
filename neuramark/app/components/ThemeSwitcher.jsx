@@ -1,6 +1,6 @@
 // components/ThemeSwitcher.js
 'use client'
-import { useTheme } from './ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeSwitcher() {
