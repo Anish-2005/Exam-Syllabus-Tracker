@@ -9,7 +9,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 export default function NavigationBar({
-  user,
   isDark,
   textColor,
   secondaryText,
@@ -99,7 +98,7 @@ export default function NavigationBar({
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? "bg-indigo-900 text-indigo-300" : "bg-indigo-100 text-indigo-700"}`}
                 >
-                  <User className="w-4 h-4" />
+                  <Users className="w-4 h-4" />
                 </div>
               )}
               <span className={`text-sm ${textColor} hidden lg:inline`}>
