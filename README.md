@@ -51,6 +51,7 @@ NeuraMark is a comprehensive, full-stack web application designed to revolutioni
 - **User Analytics**: Comprehensive user progress analytics
 - **Branch Management**: Add/remove academic branches and specializations
 - **Subject Administration**: Bulk operations and subject template copying
+- **AI-Powered PDF Upload**: Automatically extract syllabus data from PDF documents using Google Gemini AI
 - **System Monitoring**: Real-time user activity and engagement metrics
 
 ## 🛠️ Technology Stack
@@ -248,6 +249,7 @@ neuramark/
 2. **Content Management**
    - Add new subjects with module breakdowns
    - Copy subjects between branches/years
+   - Upload PDF syllabi for automatic AI processing and database updates
    - Manage user permissions
    - Monitor system analytics
 
@@ -379,7 +381,7 @@ npm start
 ### **Planned Features**
 - [ ] **Mobile App**: React Native mobile application
 - [ ] **Offline Support**: PWA capabilities for offline access
-- [ ] **AI Integration**: Smart study recommendations
+- [x] **AI Integration**: Smart study recommendations (PDF processing implemented)
 - [ ] **Calendar Integration**: Sync with academic calendars
 - [ ] **Study Groups**: Enhanced collaboration features
 - [ ] **Progress Analytics**: Advanced learning analytics

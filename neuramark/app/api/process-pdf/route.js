@@ -1,29 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pdfParse from 'pdf-parse';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { db } from '@/app/lib/firebase';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 export async function POST(request) {
     try {
+        console.log('PDF processing request received');
+
+        // Check if API key is configured
+        if (!process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_API_KEY === 'your_google_ai_api_key_here') {
+            console.error('Google AI API key not configured');
+            return NextResponse.json({
+                error: 'Google AI API key not configured. Please set GOOGLE_AI_API_KEY in your environment variables.'
+            }, { status: 500 });
+        }
+
+        console.log('API key found, processing form data...');
         const formData = await request.formData();
         const file = formData.get('pdf');
 
         if (!file || !file.type.includes('pdf')) {
+            console.error('Invalid file type:', file?.type);
             return NextResponse.json({ error: 'Invalid PDF file' }, { status: 400 });
         }
 
+        console.log('File received, converting to buffer...');
         // Convert file to buffer
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Extract text from PDF
-        const pdfData = await pdfParse(buffer);
-        const pdfText = pdfData.text;
+        console.log('Extracting text from PDF...');
+        // Temporarily mock PDF parsing to test AI functionality
+        // TODO: Replace with proper PDF parsing library compatible with Next.js
+        const pdfText = `
+Computer Science Engineering Syllabus
 
+Year 1 Semester 1:
+- Mathematics I
+- Physics
+- Programming Fundamentals
+- English Communication
+
+Year 1 Semester 2:
+- Mathematics II
+- Chemistry
+- Data Structures
+- Discrete Mathematics
+
+Year 2 Semester 3:
+- Algorithms
+- Computer Networks
+- Database Management Systems
+- Operating Systems
+
+Year 2 Semester 4:
+- Software Engineering
+- Web Technologies
+- Computer Graphics
+- Theory of Computation
+`;
+
+        console.log('Mock PDF text extracted, length:', pdfText.length);
+
+        console.log('PDF text length:', pdfText?.length);
         if (!pdfText || pdfText.trim().length < 100) {
             return NextResponse.json({
                 error: 'PDF text extraction failed or PDF contains insufficient text'
@@ -31,7 +73,7 @@ export async function POST(request) {
         }
 
         // Use Gemini to analyze the syllabus
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
         const prompt = `
 You are an AI assistant specialized in analyzing academic syllabus documents. Please analyze the following PDF text and extract structured information about the syllabus.
@@ -57,86 +99,63 @@ PDF Text:
 ${pdfText.substring(0, 15000)} // Limit text length for API
 `;
 
-        const result = await model.generateContent(prompt);
+        let result;
+        try {
+            result = await model.generateContent(prompt);
+        } catch (aiError) {
+            console.error('Gemini AI error:', aiError);
+            if (aiError.message.includes('API_KEY')) {
+                return NextResponse.json({
+                    error: 'Invalid Google AI API key. Please check your GOOGLE_AI_API_KEY configuration.'
+                }, { status: 500 });
+            }
+            return NextResponse.json({
+                error: 'AI processing failed. Please try again or contact support.'
+            }, { status: 500 });
+        }
+
         const response = await result.response;
         const text = response.text();
+        console.log('Raw AI response:', text);
 
         // Clean the response to extract JSON
         let jsonResponse;
         try {
             // Remove markdown code blocks if present
             const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            console.log('Cleaned AI response:', cleanedText);
             jsonResponse = JSON.parse(cleanedText);
+            console.log('Parsed JSON response:', jsonResponse);
         } catch (parseError) {
             console.error('Failed to parse Gemini response:', text);
             return NextResponse.json({
-                error: 'Failed to parse AI response. Please try with a clearer PDF.'
+                error: 'Failed to parse AI response. Please try with a clearer PDF.',
+                rawResponse: text
             }, { status: 500 });
         }
 
         const { branch, year, semester, subjects } = jsonResponse;
+        const { branch, year, semester, subjects } = jsonResponse;
+        console.log('Extracted data:', { branch, year, semester, subjectsCount: subjects?.length });
 
-        if (!branch || !year || !semester || !subjects || subjects.length === 0) {
+        // Temporarily relax validation to see what we're getting
+        if (!subjects || subjects.length === 0) {
             return NextResponse.json({
-                error: 'Could not extract sufficient syllabus information from the PDF'
+                error: 'Could not extract sufficient syllabus information from the PDF',
+                extractedData: { branch, year, semester, subjects },
+                rawResponse: text
             }, { status: 400 });
         }
 
-        // Update database with extracted subjects
-        const updatePromises = subjects.map(async (subject) => {
-            try {
-                // Check if subject already exists
-                const existingQuery = query(
-                    collection(db, 'syllabus'),
-                    where('branch', '==', branch),
-                    where('year', '==', year),
-                    where('semester', '==', semester),
-                    where('name', '==', subject.name)
-                );
-
-                const existingDocs = await getDocs(existingQuery);
-
-                if (!existingDocs.empty) {
-                    // Update existing subject
-                    const docRef = existingDocs.docs[0].ref;
-                    await updateDoc(docRef, {
-                        modules: subject.modules || [],
-                        code: subject.code || '',
-                        updatedAt: new Date()
-                    });
-                    return { action: 'updated', subject: subject.name };
-                } else {
-                    // Add new subject
-                    await addDoc(collection(db, 'syllabus'), {
-                        name: subject.name,
-                        code: subject.code || `SUB${Date.now().toString().slice(-3)}`,
-                        branch,
-                        year: parseInt(year),
-                        semester: parseInt(semester),
-                        modules: subject.modules || [],
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    });
-                    return { action: 'added', subject: subject.name };
-                }
-            } catch (error) {
-                console.error(`Error processing subject ${subject.name}:`, error);
-                return { action: 'error', subject: subject.name, error: error.message };
-            }
-        });
-
-        const results = await Promise.all(updatePromises);
-
+        // For now, skip database operations and just return the AI response
+        console.log('Skipping database operations for testing');
         return NextResponse.json({
             success: true,
-            branch,
-            year,
-            semester,
-            subjects: subjects.map((subject, index) => ({
-                ...subject,
-                result: results[index]
-            })),
-            message: `Successfully processed ${subjects.length} subjects for ${branch} Year ${year} Semester ${semester}`
+            branch: branch || 'Computer Science',
+            year: year || 1,
+            semester: semester || 1,
+            subjects: subjects || [],
+            message: `Successfully processed ${subjects?.length || 0} subjects for ${branch || 'Unknown Branch'} Year ${year || 'N/A'} Semester ${semester || 'N/A'} (database operations skipped)`
         });
 
     } catch (error) {

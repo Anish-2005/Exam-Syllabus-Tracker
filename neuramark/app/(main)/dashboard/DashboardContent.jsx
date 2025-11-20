@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useTheme } from '../../context/ThemeContext';
-import { MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
+import { Upload,MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
@@ -1312,6 +1312,14 @@ export default function Dashboard() {
                                                             hover: ['from-green-700', 'to-green-800'],
                                                             bar: 'bg-green-400',
                                                             icon: <Activity size={20} />,
+                                                        },
+                                                        {
+                                                            href: '/admin/pdf-upload',
+                                                            label: 'PDF Upload',
+                                                            colors: ['from-red-600', 'to-red-700'],
+                                                            hover: ['from-red-700', 'to-red-800'],
+                                                            bar: 'bg-red-400',
+                                                            icon: <Upload size={20} />,
                                                         },
                                                     ]
                                                     : []),
