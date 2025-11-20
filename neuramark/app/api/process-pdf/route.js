@@ -75,29 +75,31 @@ Year 2 Semester 4:
         // Use Gemini to analyze the syllabus
         const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-        const prompt = `
-You are an AI assistant specialized in analyzing academic syllabus documents. Please analyze the following PDF text and extract structured information about the syllabus.
+        const prompt = `Analyze this syllabus text and extract information in JSON format.
 
-Extract the following information in JSON format:
-1. branch: The academic branch/department (e.g., "Computer Science", "Mechanical Engineering")
-2. year: The academic year (1, 2, 3, or 4)
-3. semester: The semester number (1-8, where year 1 has semesters 1-2, year 2 has 3-4, etc.)
-4. subjects: Array of subject objects, each containing:
-   - name: Subject name
-   - code: Subject code (if available)
-   - modules: Array of module objects with:
-     - name: Module name
-     - topics: Array of topic strings
+Return ONLY a JSON object with this exact structure:
+{
+  "branch": "Computer Science",
+  "year": 1,
+  "semester": 1,
+  "subjects": [
+    {
+      "name": "Subject Name",
+      "code": "SUB001",
+      "modules": [
+        {
+          "name": "Module Name",
+          "topics": ["Topic 1", "Topic 2"]
+        }
+      ]
+    }
+  ]
+}
 
-IMPORTANT: 
-- If you cannot determine exact values, use reasonable defaults or null
-- For subjects without codes, you can generate codes like "SUB001", "SUB002", etc.
-- Focus on extracting actual syllabus content, not administrative information
-- Return ONLY valid JSON, no additional text
+Syllabus text:
+${pdfText.substring(0, 10000)}
 
-PDF Text:
-${pdfText.substring(0, 15000)} // Limit text length for API
-`;
+If you cannot find specific information, use reasonable defaults like "Computer Science" for branch, 1 for year, etc.`;
 
         let result;
         try {
@@ -134,7 +136,6 @@ ${pdfText.substring(0, 15000)} // Limit text length for API
             }, { status: 500 });
         }
 
-        const { branch, year, semester, subjects } = jsonResponse;
         const { branch, year, semester, subjects } = jsonResponse;
         console.log('Extracted data:', { branch, year, semester, subjectsCount: subjects?.length });
 
