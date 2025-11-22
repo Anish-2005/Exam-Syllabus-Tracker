@@ -2,9 +2,9 @@
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useTheme } from '@/app/context/ThemeContext';
-import { Sun, Moon, BookOpen, ChevronDown, ChevronUp, RefreshCw, User, BarChart2, Target, Award, TrendingUp, X, Menu } from 'lucide-react';
+import { Sun, Moon, BookOpen, ChevronDown, ChevronUp, RefreshCw, User, BarChart2, Target, Award, TrendingUp, X, Menu, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { db } from '@/app/lib/firebase';
@@ -21,16 +21,17 @@ export default function KraKpiPage() {
     const router = useRouter();
     const { theme, toggleTheme, isDark } = useTheme();
     const [activeTab, setActiveTab] = useState('kpi');
+    const [selectedSemester, setSelectedSemester] = useState('all');
 
 
-    // Theme styles
-    const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
-    const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
-    const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900';
-    const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600';
-    const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
-    const activeTabBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200';
-    const inactiveTabBg = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100';
+    // Enhanced theme styles
+    const bgColor = isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
+    const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg';
+    const textColor = isDark ? 'text-gray-100' : 'text-gray-900';
+    const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600';
+    const borderColor = isDark ? 'border-gray-700' : 'border-purple-200';
+    const activeTabBg = isDark ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gradient-to-r from-indigo-500 to-purple-500';
+    const inactiveTabBg = isDark ? 'bg-gray-700/50' : 'bg-white/60';
 
     useEffect(() => {
         if (user) {
@@ -65,6 +66,13 @@ export default function KraKpiPage() {
                 }
                 setSyllabusData(syllabusMap);
             }
+
+            // Fetch user's saved semester preference
+            const userPrefsRef = doc(db, 'userPreferences', user.uid);
+            const userPrefsDoc = await getDoc(userPrefsRef);
+            if (userPrefsDoc.exists() && userPrefsDoc.data().defaultSemesterKPI) {
+                setSelectedSemester(userPrefsDoc.data().defaultSemesterKPI);
+            }
         } catch (error) {
             console.error('Error fetching user data:', error);
         } finally {
@@ -94,6 +102,26 @@ export default function KraKpiPage() {
         };
     };
 
+    const getAvailableSemesters = () => {
+        const semesters = new Set(
+            Object.values(syllabusData)
+                .map(subject => subject.semester)
+                .filter(Boolean)
+        );
+        return Array.from(semesters).sort();
+    };
+
+    const handleSemesterChange = async (semester) => {
+        setSelectedSemester(semester);
+        try {
+            await setDoc(doc(db, 'userPreferences', user.uid), {
+                defaultSemesterKPI: semester
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error saving semester preference:', error);
+        }
+    };
+
     const getKpiData = () => {
         if (!userProgress) return [];
 
@@ -117,7 +145,11 @@ export default function KraKpiPage() {
                     semester: subjectInfo.semester
                 };
             })
-            .filter(item => item !== null)
+            .filter(item => {
+                if (item === null) return false;
+                if (selectedSemester === 'all') return true;
+                return item.semester === selectedSemester;
+            })
             .sort((a, b) => b.progress - a.progress);
     };
 
@@ -206,42 +238,46 @@ export default function KraKpiPage() {
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200 pb-8`}>
                 {/* Navigation */}
-                <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                <nav className={`${cardBg} shadow-xl ${borderColor} border-b sticky top-0 z-50 backdrop-blur-xl`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20">
                             {/* Left Section */}
                             <div className="flex items-center space-x-3 min-w-0">
                                 <Link
                                     href="/dashboard"
-                                    className="p-2 rounded-full transition-colors"
+                                    className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-purple-100'}`}
                                     aria-label="Back to Dashboard"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                    </svg>
+                                    <ArrowLeft className={`h-5 w-5 ${textColor}`} />
                                 </Link>
-                                <Image
-                                    src="/emblem.png"
-                                    alt="NeuraMark Logo"
-                                    width={36}
-                                    height={36}
-                                    className="rounded-sm shadow-sm shrink-0"
-                                    priority
-                                />
-                                <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
-                                    Learning Analytics
-                                </h1>
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-40"></div>
+                                    <Image
+                                        src="/emblem.png"
+                                        alt="NeuraMark Logo"
+                                        width={40}
+                                        height={40}
+                                        className="rounded-lg shadow-lg shrink-0 relative"
+                                        priority
+                                    />
+                                </div>
+                                <div>
+                                    <h1 className={`text-lg sm:text-2xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-xs ${isDark ? 'bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
+                                        Learning Analytics
+                                    </h1>
+                                    <p className={`text-xs ${secondaryText} hidden sm:block`}>KPI & KRA Dashboard</p>
+                                </div>
                             </div>
 
                             {/* Desktop Controls */}
                             <div className="hidden md:flex items-center space-x-4">
                                 <button
                                     onClick={fetchUserData}
-                                    className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md hover:from-indigo-700 hover:to-blue-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+                                    className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 text-sm font-medium shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={loading}
                                 >
-                                    <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-                                    <span>Refresh</span>
+                                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                                    <span>Refresh Data</span>
                                 </button>
 
                                 {user?.photoURL ? (
@@ -264,10 +300,10 @@ export default function KraKpiPage() {
 
                                 <button
                                     onClick={toggleTheme}
-                                    className={`p-2 rounded-full transition-all duration-300
-                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                        shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                                    className={`p-2.5 rounded-xl transition-all duration-300 transform hover:scale-110 active:scale-95
+                        ${isDark ? 'bg-gray-700/80 hover:bg-gray-600/80' : 'bg-white/80 hover:bg-purple-100'}
+                        shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-purple-500'}`}
                                     aria-label="Toggle Theme"
                                 >
                                     <AnimatePresence mode="wait" initial={false}>
@@ -456,35 +492,43 @@ export default function KraKpiPage() {
                     )}
                 </AnimatePresence>
                 {/* Main Content */}
-                <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
-                    <div className={`${cardBg} p-4 sm:p-6 rounded-lg shadow ${borderColor} border mt-4`}>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                            <div>
-                                <h2 className={`text-xl font-bold ${textColor} mb-1`}>
-                                    Key Performance Indicators
-                                </h2>
-                                <div className="flex items-center space-x-2">
-                                    {user?.photoURL ? (
-                                        <Image
-                                            src={user.photoURL}
-                                            alt={user.displayName || 'User'}
-                                            width={24}
-                                            height={24}
-                                            className="rounded-full"
-                                        />
-                                    ) : (
-                                        <div className={`h-6 w-6 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300`}>
-                                            <User size={14} />
-                                        </div>
-                                    )}
-                                    <span className={`text-sm ${secondaryText}`}>{user?.email}</span>
+                <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor} py-6`}>
+                    <div className={`${cardBg} p-6 sm:p-8 rounded-2xl shadow-2xl ${borderColor} border-2`}>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-40"></div>
+                                    <div className="relative p-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg">
+                                        <BarChart2 className="w-8 h-8 text-white" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h2 className={`text-2xl sm:text-3xl font-bold ${textColor} mb-1`}>
+                                        Key Performance Indicators
+                                    </h2>
+                                    <div className="flex items-center space-x-2">
+                                        {user?.photoURL ? (
+                                            <Image
+                                                src={user.photoURL}
+                                                alt={user.displayName || 'User'}
+                                                width={28}
+                                                height={28}
+                                                className="rounded-full ring-2 ring-indigo-500"
+                                            />
+                                        ) : (
+                                            <div className="h-7 w-7 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                                                <User size={16} />
+                                            </div>
+                                        )}
+                                        <span className={`text-sm font-medium ${secondaryText}`}>{user?.email}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex mt-4 sm:mt-0 space-x-2">
+                            <div className="flex mt-4 sm:mt-0 space-x-3">
                                 <button
                                     onClick={() => setActiveTab('kpi')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'kpi' ? `${activeTabBg} ${textColor}` : `${inactiveTabBg} ${secondaryText}`}`}
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 active:scale-95 shadow-md ${activeTab === 'kpi' ? `${activeTabBg} text-white shadow-lg` : `${inactiveTabBg} ${secondaryText} hover:shadow-lg`}`}
                                 >
                                     <div className="flex items-center">
                                         <Target className="w-4 h-4 mr-2" />
@@ -493,7 +537,7 @@ export default function KraKpiPage() {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('kra')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'kra' ? `${activeTabBg} ${textColor}` : `${inactiveTabBg} ${secondaryText}`}`}
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 active:scale-95 shadow-md ${activeTab === 'kra' ? `${activeTabBg} text-white shadow-lg` : `${inactiveTabBg} ${secondaryText} hover:shadow-lg`}`}
                                 >
                                     <div className="flex items-center">
                                         <Award className="w-4 h-4 mr-2" />
@@ -504,43 +548,88 @@ export default function KraKpiPage() {
                         </div>
 
                         {loading ? (
-                            <div className="flex justify-center items-center h-40">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                            <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                                <div className="relative">
+                                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-indigo-600"></div>
+                                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-xl"></div>
+                                </div>
+                                <p className={`text-sm font-medium ${secondaryText} animate-pulse`}>Loading analytics...</p>
                             </div>
                         ) : !userProgress ? (
-                            <div className={`text-center py-8 ${secondaryText}`}>
-                                <BarChart2 size={48} className="mx-auto mb-4 opacity-50" />
-                                <p>No analytics data available</p>
-                                <p className="mt-2 text-sm">Your learning analytics will appear here after you make progress in your subjects.</p>
-                                <Link href="/dashboard" className={`mt-4 inline-block text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300`}>
-                                    Go to Dashboard
-                                </Link>
+                            <div className={`text-center py-16`}>
+                                <div className="relative inline-block">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur-xl opacity-20"></div>
+                                    <div className={`relative p-6 rounded-2xl ${isDark ? 'bg-gray-700/50' : 'bg-white/80'} shadow-xl`}>
+                                        <BarChart2 className={`w-16 h-16 mx-auto mb-4 ${secondaryText}`} />
+                                        <h3 className={`text-xl font-bold ${textColor} mb-2`}>No Analytics Data</h3>
+                                        <p className={`${secondaryText} mb-4`}>Your learning analytics will appear here after you make progress in your subjects.</p>
+                                        <Link href="/dashboard" className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 active:scale-95 ${isDark ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600'} text-white shadow-md hover:shadow-lg`}>
+                                            Go to Dashboard
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
                         ) : activeTab === 'kpi' ? (
                             <div className="space-y-8">
+                                {/* Semester Filter */}
+                                {getAvailableSemesters().length > 0 && (
+                                    <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg backdrop-blur-sm`}>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className={`text-sm font-medium ${secondaryText}`}>Filter by Semester:</span>
+                                            <button
+                                                onClick={() => handleSemesterChange('all')}
+                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all transform hover:scale-105 active:scale-95 ${
+                                                    selectedSemester === 'all'
+                                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                                        : isDark
+                                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                All Semesters
+                                            </button>
+                                            {getAvailableSemesters().map(semester => (
+                                                <button
+                                                    key={semester}
+                                                    onClick={() => handleSemesterChange(semester)}
+                                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all transform hover:scale-105 active:scale-95 ${
+                                                        selectedSemester === semester
+                                                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                                            : isDark
+                                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    Semester {semester}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Overall Progress Summary */}
-                                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
+                                <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg backdrop-blur-sm`}>
                                     <h3 className={`text-lg font-semibold ${textColor} mb-4 flex items-center`}>
                                         <TrendingUp className="w-5 h-5 mr-2" />
                                         Overall Learning Progress
                                     </h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
+                                        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
                                             <div className={`text-sm ${secondaryText} mb-1`}>Total Subjects</div>
                                             <div className={`text-2xl font-bold ${textColor}`}>
                                                 {getKpiData().length}
                                             </div>
                                         </div>
 
-                                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
+                                        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-purple-50 to-pink-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
                                             <div className={`text-sm ${secondaryText} mb-1`}>Total Modules</div>
                                             <div className={`text-2xl font-bold ${textColor}`}>
                                                 {getKpiData().reduce((sum, subject) => sum + subject.total, 0)}
                                             </div>
                                         </div>
 
-                                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
+                                        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-green-50 to-emerald-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
                                             <div className={`text-sm ${secondaryText} mb-1`}>Average Completion</div>
                                             <div className={`text-2xl font-bold ${textColor}`}>
                                                 {Math.round(
@@ -553,7 +642,7 @@ export default function KraKpiPage() {
                                 </div>
 
                                 {/* Subject Progress Charts */}
-                                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
+                                <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg backdrop-blur-sm`}>
                                     <h3 className={`text-lg font-semibold ${textColor} mb-4`}>
                                         Subject-wise Performance
                                     </h3>
@@ -609,7 +698,7 @@ export default function KraKpiPage() {
                                 </div>
 
                                 {/* Detailed Subject Progress */}
-                                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
+                                <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg backdrop-blur-sm`}>
                                     <h3 className={`text-lg font-semibold ${textColor} mb-4`}>
                                         Subject Progress Details
                                     </h3>
@@ -687,13 +776,13 @@ export default function KraKpiPage() {
                         ) : (
                             <div className="space-y-8">
                                 {/* KRA Summary */}
-                                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
+                                <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg backdrop-blur-sm`}>
                                     <h3 className={`text-lg font-semibold ${textColor} mb-4`}>
                                         Key Result Areas (By Semester)
                                     </h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
+                                        <div className={`p-5 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-indigo-50 to-purple-50'} border ${borderColor} shadow-md hover:shadow-lg transition-all`}>
                                             <h4 className={`text-md font-medium ${textColor} mb-3`}>
                                                 Semester-wise Progress Distribution
                                             </h4>
@@ -733,7 +822,7 @@ export default function KraKpiPage() {
                                             </div>
                                         </div>
 
-                                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
+                                        <div className={`p-5 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-purple-50 to-pink-50'} border ${borderColor} shadow-md hover:shadow-lg transition-all`}>
                                             <h4 className={`text-md font-medium ${textColor} mb-3`}>
                                                 Yearly Progress Trend
                                             </h4>
@@ -787,7 +876,7 @@ export default function KraKpiPage() {
                                 </div>
 
                                 {/* KRA Detailed Table */}
-                                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
+                                <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg backdrop-blur-sm`}>
                                     <h3 className={`text-lg font-semibold ${textColor} mb-4`}>
                                         Semester-wise Key Results
                                     </h3>

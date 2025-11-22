@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 import { useAuth } from '../../../context/AuthContext';
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useTheme } from '../../../context/ThemeContext';
 import { User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Calendar, Clock, BookOpen, GraduationCap } from 'lucide-react'
@@ -31,6 +31,8 @@ export default function ExamsPage() {
     });
     const [editingExamId, setEditingExamId] = useState(null);
     const [filter, setFilter] = useState('upcoming'); // 'upcoming', 'past', 'all'
+    const [enrolledSubjects, setEnrolledSubjects] = useState([]);
+    const [selectedSemester, setSelectedSemester] = useState('all');
 
     const bgColor = isDark ? 'bg-gray-900' : 'bg-gray-50';
     const cardBg = isDark ? 'bg-gray-800' : 'bg-white';
@@ -45,6 +47,7 @@ export default function ExamsPage() {
         const fetchExams = async () => {
             setLoading(true);
             try {
+                // Fetch exams
                 const q = query(collection(db, 'userExams'), where('userId', '==', user.uid));
                 const querySnapshot = await getDocs(q);
                 const examsData = querySnapshot.docs.map(doc => ({
@@ -52,6 +55,27 @@ export default function ExamsPage() {
                     ...doc.data()
                 }));
                 setExams(examsData);
+
+                // Fetch enrolled subjects to get semesters
+                const progressQuery = query(collection(db, 'userProgress'), where('userId', '==', user.uid));
+                const progressSnapshot = await getDocs(progressQuery);
+                const subjectIds = progressSnapshot.docs.map(doc => doc.data().subjectId);
+
+                if (subjectIds.length > 0) {
+                    const syllabusQuery = query(collection(db, 'syllabus'));
+                    const syllabusSnapshot = await getDocs(syllabusQuery);
+                    const subjects = syllabusSnapshot.docs
+                        .map(doc => ({ id: doc.id, ...doc.data() }))
+                        .filter(subject => subjectIds.includes(subject.id));
+                    setEnrolledSubjects(subjects);
+                }
+
+                // Fetch user's saved semester preference
+                const userPrefsRef = doc(db, 'userPreferences', user.uid);
+                const userPrefsDoc = await getDoc(userPrefsRef);
+                if (userPrefsDoc.exists() && userPrefsDoc.data().defaultSemesterExams) {
+                    setSelectedSemester(userPrefsDoc.data().defaultSemesterExams);
+                }
             } catch (error) {
                 console.error('Error fetching exams:', error);
             } finally {
@@ -62,13 +86,39 @@ export default function ExamsPage() {
         fetchExams();
     }, [user]);
 
+    const getAvailableSemesters = () => {
+        const semesters = new Set(enrolledSubjects.map(subject => subject.semester).filter(Boolean));
+        return Array.from(semesters).sort();
+    };
+
+    const handleSemesterChange = async (semester) => {
+        setSelectedSemester(semester);
+        try {
+            await setDoc(doc(db, 'userPreferences', user.uid), {
+                defaultSemesterExams: semester
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error saving semester preference:', error);
+        }
+    };
+
     const filteredExams = exams.filter(exam => {
         const now = new Date();
         const examDate = new Date(`${exam.date}T${exam.time || '00:00'}`);
 
-        if (filter === 'upcoming') return examDate >= now;
-        if (filter === 'past') return examDate < now;
-        return true; // 'all'
+        // Filter by time
+        let timeMatch = true;
+        if (filter === 'upcoming') timeMatch = examDate >= now;
+        else if (filter === 'past') timeMatch = examDate < now;
+
+        // Filter by semester
+        let semesterMatch = true;
+        if (selectedSemester !== 'all') {
+            const examSubject = enrolledSubjects.find(s => s.name === exam.subject);
+            semesterMatch = examSubject && examSubject.semester === selectedSemester;
+        }
+
+        return timeMatch && semesterMatch;
     });
 
     const handleAddExam = async () => {
@@ -386,28 +436,64 @@ export default function ExamsPage() {
 
                     <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
                         <div className={`${cardBg} p-4 rounded-lg shadow mb-6 ${borderColor} border`}>
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <h2 className="text-xl font-bold">My Exam Schedule</h2>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <h2 className="text-xl font-bold">My Exam Schedule</h2>
 
-                                <div className="flex items-center gap-3 w-full sm:w-auto">
-                                    <select
-                                        value={filter}
-                                        onChange={(e) => setFilter(e.target.value)}
-                                        className={`flex-1 sm:w-auto pl-3 pr-8 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
-                                    >
-                                        <option value="upcoming">Upcoming</option>
-                                        <option value="past">Past</option>
-                                        <option value="all">All Exams</option>
-                                    </select>
+                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                        <select
+                                            value={filter}
+                                            onChange={(e) => setFilter(e.target.value)}
+                                            className={`flex-1 sm:w-auto pl-3 pr-8 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                        >
+                                            <option value="upcoming">Upcoming</option>
+                                            <option value="past">Past</option>
+                                            <option value="all">All Exams</option>
+                                        </select>
 
-                                    <button
-                                        onClick={() => setShowAddExam(true)}
-                                        className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-1"
-                                    >
-                                        <Plus size={16} />
-                                        <span className="hidden sm:inline">Add Exam</span>
-                                    </button>
+                                        <button
+                                            onClick={() => setShowAddExam(true)}
+                                            className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-1"
+                                        >
+                                            <Plus size={16} />
+                                            <span className="hidden sm:inline">Add Exam</span>
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* Semester Filter */}
+                                {getAvailableSemesters().length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className={`text-sm ${secondaryText} self-center mr-2`}>Filter by Semester:</span>
+                                        <button
+                                            onClick={() => handleSemesterChange('all')}
+                                            className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                                                selectedSemester === 'all'
+                                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                                    : isDark
+                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            All Semesters
+                                        </button>
+                                        {getAvailableSemesters().map(semester => (
+                                            <button
+                                                key={semester}
+                                                onClick={() => handleSemesterChange(semester)}
+                                                className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                                                    selectedSemester === semester
+                                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                                        : isDark
+                                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                Semester {semester}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
