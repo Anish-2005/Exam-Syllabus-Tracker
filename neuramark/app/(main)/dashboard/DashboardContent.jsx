@@ -1005,16 +1005,21 @@ export default function Dashboard() {
                     </AnimatePresence>
 
 
-                    <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
-                        <div className={`${cardBg} p-4 rounded-lg shadow mb-6 ${borderColor} border`}>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor} relative`}>
+                        {/* Subtle background gradient */}
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+                            <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 dark:opacity-5"></div>
+                            <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 dark:opacity-5"></div>
+                        </div>
+                        <div className={`${cardBg} p-6 rounded-2xl shadow-2xl mb-8 ${borderColor} border-2`}>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <label className={`block text-sm font-medium ${secondaryText}`}>Branch</label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className={`block text-sm font-bold ${textColor}`}>Branch</label>
                                         {isAdmin && (
                                             <button
                                                 onClick={() => setEditingBranch(!editingBranch)}
-                                                className="text-xs p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                className={`text-xs p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                                             >
                                                 {editingBranch ? <X size={14} /> : <Edit size={14} />}
                                             </button>
@@ -1071,7 +1076,7 @@ export default function Dashboard() {
                                                 setSelectedBranch(e.target.value);
                                                 setSelectedSubject(null);
                                             }}
-                                            className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                            className={`block w-full px-4 py-3 text-base border-2 ${borderColor} focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-500 rounded-xl ${inputBg} font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                                             disabled={branches.length === 0}
                                         >
                                             {branches.length === 0 ? (
@@ -1086,12 +1091,12 @@ export default function Dashboard() {
                                 </div>
 
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <label className={`block text-sm font-medium ${secondaryText}`}>Year</label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className={`block text-sm font-bold ${textColor}`}>Year</label>
                                         {isAdmin && (
                                             <button
                                                 onClick={() => setEditingYear(!editingYear)}
-                                                className="text-xs p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                className={`text-xs p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                                             >
                                                 {editingYear ? <X size={14} /> : <Edit size={14} />}
                                             </button>
@@ -1162,12 +1167,12 @@ export default function Dashboard() {
                                 </div>
 
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <label className={`block text-sm font-medium ${secondaryText}`}>Semester</label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className={`block text-sm font-bold ${textColor}`}>Semester</label>
                                         {isAdmin && (
                                             <button
                                                 onClick={() => setEditingSemester(!editingSemester)}
-                                                className="text-xs p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                className={`text-xs p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                                             >
                                                 {editingSemester ? <X size={14} /> : <Edit size={14} />}
                                             </button>
@@ -1198,7 +1203,7 @@ export default function Dashboard() {
                                                 setSelectedSemester(e.target.value ? Number(e.target.value) : null);
                                                 setSelectedSubject(null);
                                             }}
-                                            className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                            className={`block w-full px-4 py-3 text-base border-2 ${borderColor} focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-500 rounded-xl ${inputBg} font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                                             disabled={!selectedYear}
                                         >
                                             <option value="">All Semesters</option>
@@ -1576,15 +1581,19 @@ export default function Dashboard() {
                         )}
 
                         {/* Two-column layout */}
-                        <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex flex-col lg:flex-row gap-8">
                             {/* Subjects List */}
                             <div className="lg:w-1/3">
-                                <div className={`${cardBg} p-6 rounded-lg shadow ${borderColor} border`}>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h2 className={`text-xl font-bold ${textColor}`}>
-                                            {selectedBranch} Year {selectedYear}
-                                            {selectedSemester ? ` Semester ${selectedSemester}` : ' All Semesters'} Subjects
-                                        </h2>
+                                <div className={`${cardBg} px-2 py-8 rounded-2xl shadow-2xl ${borderColor} border-2`}>
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div>
+                                            <h2 className={`text-2xl font-black ${textColor} mb-1`}>
+                                                {selectedBranch}
+                                            </h2>
+                                            <p className={`text-sm font-semibold ${secondaryText}`}>
+                                                Year {selectedYear}{selectedSemester ? ` • Semester ${selectedSemester}` : ' • All Semesters'}
+                                            </p>
+                                        </div>
                                         {isAdmin && (
                                             <button
                                                 onClick={() => {
@@ -1592,10 +1601,10 @@ export default function Dashboard() {
                                                     setNewSubject({ name: '', code: '', modules: [] });
                                                     setShowAddSubject(true);
                                                 }}
-                                                className="p-1.5 bg-green-600 text-white rounded-md hover:bg-green-700"
+                                                className="p-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95"
                                                 disabled={!selectedBranch}
                                             >
-                                                <Plus size={18} />
+                                                <Plus size={20} />
                                             </button>
                                         )}
                                     </div>
@@ -1753,16 +1762,16 @@ export default function Dashboard() {
                                                     `}
                                                         onClick={() => setSelectedSubject(subject)}
                                                     >
-                                                        <div className="flex justify-between items-center">
-                                                            <div className="flex-1">
+                                                        <div className="flex justify-between items-center gap-4">
+                                                            <div className="flex-2 min-w-40 pl-1">
                                                                 <h3 className={`font-bold text-lg ${textColor}`}>{subject.name}</h3>
-                                                                <p className={`text-sm font-medium ${secondaryText} mt-1 flex items-center gap-1`}>
-                                                                    <BookOpen className="w-4 h-4" />
-                                                                    {subject.code} • Semester {subject.semester}
+                                                                <p className={`text-sm font-medium ${secondaryText} mt-1 flex items-center gap-1 whitespace-nowrap`}>
+                                                                    <BookOpen className="w-4 h-4 shrink-0" />
+                                                                    <span className="truncate">{subject.code} • Semester {subject.semester}</span>
                                                                 </p>
                                                             </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <span className={`text-sm font-bold ${selectedSubject?.id === subject.id ? 'text-purple-600 dark:text-purple-400' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                                                            <div className="flex items-center gap-3 shrink-0">
+                                                                <span className={`text-sm font-bold min-w-[3rem] text-right ${selectedSubject?.id === subject.id ? 'text-purple-600 dark:text-purple-400' : 'text-indigo-500 dark:text-indigo-400'}`}>
                                                                     {calculateProgress(subject)}%
                                                                 </span>
                                                                 {isAdmin && (

@@ -15,20 +15,23 @@ export default function Navbar({ user, logout, toggleTheme, isDark, page = "Dash
 
     return (
         <>
-            <nav className={`bg-white dark:bg-gray-900 shadow-lg border-b dark:border-gray-700 sticky top-0 z-50`}>
+            <nav className={`bg-white dark:bg-gray-900 shadow-2xl border-b-2 dark:border-gray-700 border-purple-100 dark:border-purple-900/30 sticky top-0 z-50 backdrop-blur-xl bg-opacity-90 dark:bg-opacity-90`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16 md:h-20">
                         {/* Left Section */}
                         <div className="flex items-center space-x-3 min-w-0">
-                            <Image
-                                src="/emblem.png"
-                                alt="NeuraMark Logo"
-                                width={36}
-                                height={36}
-                                className="rounded-sm shadow-sm shrink-0"
-                                priority
-                            />
-                            <h1 className={`text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
+                            <div className="relative group">
+                                <Image
+                                    src="/emblem.png"
+                                    alt="NeuraMark Logo"
+                                    width={40}
+                                    height={40}
+                                    className="rounded-lg shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-110"
+                                    priority
+                                />
+                                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </div>
+                            <h1 className={`text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
                                 {page}
                             </h1>
                             {isAdmin && (
