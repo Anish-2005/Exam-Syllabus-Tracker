@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useTheme } from '../../context/ThemeContext';
-import { Upload,MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen } from 'lucide-react'
+import { Upload,MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen, Zap, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
@@ -1240,27 +1240,37 @@ export default function Dashboard() {
                                 )}
                             </div>
                             <div className="mt-8">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className={`text-lg font-semibold ${secondaryText}`}>Quick Actions</h3>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className={`text-2xl font-bold ${textColor} flex items-center gap-2`}>
+                                        <Zap className="w-6 h-6" />
+                                        Quick Actions
+                                    </h3>
                                     <button
                                         onClick={() => setShowActions(!showActions)}
-                                        className="text-sm text-blue-600 hover:underline flex items-center"
+                                        className={`text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 flex items-center gap-1 ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-purple-400' : 'bg-purple-50 hover:bg-purple-100 text-purple-600'}`}
                                     >
                                         {showActions ? (
                                             <>
-                                                Hide <ChevronUp size={16} className="ml-1" />
+                                                Hide <ChevronUp size={16} />
                                             </>
                                         ) : (
                                             <>
-                                                Show <ChevronDown size={16} className="ml-1" />
+                                                Show <ChevronDown size={16} />
                                             </>
                                         )}
                                     </button>
                                 </div>
 
+                                <AnimatePresence>
                                 {showActions && (
-                                    <div className="overflow-x-auto sm:overflow-x-visible">
-                                        <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 min-w-[500px] sm:min-w-0">
+                                    <motion.div 
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="overflow-x-auto sm:overflow-x-visible"
+                                    >
+                                        <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 min-w-[500px] sm:min-w-0">
                                             {/* Shared Action Button Component */}
                                             {[
                                                 {
@@ -1324,26 +1334,34 @@ export default function Dashboard() {
                                                     ]
                                                     : []),
                                             ].map((item, idx) => (
-                                                <Link
+                                                <motion.div
                                                     key={idx}
-                                                    href={item.href}
-                                                    className={`group relative flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${item.colors.join(
-                                                        ' '
-                                                    )} text-white overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] min-w-[150px]`}
+                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: idx * 0.05 }}
                                                 >
-                                                    <div
-                                                        className={`absolute inset-0 bg-gradient-to-br ${item.hover.join(
+                                                    <Link
+                                                        href={item.href}
+                                                        className={`group relative flex flex-col items-center justify-center p-6 rounded-2xl bg-gradient-to-br ${item.colors.join(
                                                             ' '
-                                                        )} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                                                    />
-                                                    <div className="relative z-10 flex flex-col items-center">
-                                                        {item.icon}
-                                                        <span className="mt-2 text-sm font-medium">{item.label}</span>
-                                                    </div>
-                                                    <div
-                                                        className={`absolute bottom-0 left-0 right-0 h-1 ${item.bar} scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300`}
-                                                    />
-                                                </Link>
+                                                        )} text-white overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-[1.05] active:scale-95 min-w-[150px]`}
+                                                    >
+                                                        <div
+                                                            className={`absolute inset-0 bg-gradient-to-br ${item.hover.join(
+                                                                ' '
+                                                            )} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                                                        />
+                                                        <div className="relative z-10 flex flex-col items-center">
+                                                            <div className="transform group-hover:scale-110 transition-transform duration-200">
+                                                                {item.icon}
+                                                            </div>
+                                                            <span className="mt-3 text-sm font-bold">{item.label}</span>
+                                                        </div>
+                                                        <div
+                                                            className={`absolute bottom-0 left-0 right-0 h-1 ${item.bar} scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300`}
+                                                        />
+                                                    </Link>
+                                                </motion.div>
                                             ))}
 
                                             {/* Copy Subjects button (only admin) */}
@@ -1361,8 +1379,9 @@ export default function Dashboard() {
                                                 </button>
                                             )}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 )}
+                                </AnimatePresence>
                             </div>
 
                         </div>
@@ -1716,29 +1735,34 @@ export default function Dashboard() {
                                             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             {syllabusData.length > 0 ? (
                                                 syllabusData.map(subject => (
-                                                    <div
+                                                    <motion.div
                                                         key={subject.id}
+                                                        whileHover={{ scale: 1.02 }}
+                                                        whileTap={{ scale: 0.98 }}
                                                         className={`
-                                                        p-3 rounded-lg cursor-pointer transition-colors duration-200
+                                                        p-4 rounded-xl cursor-pointer transition-all duration-200 border-2
                                                         ${selectedSubject?.id === subject.id
-                                                                ? 'bg-blue-50 border border-blue-200 dark:bg-indigo-500 dark:border-indigo-700'
+                                                                ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-400 dark:from-purple-900/30 dark:to-pink-900/30 dark:border-purple-500 shadow-lg'
                                                                 : `${theme === 'dark'
-                                                                    ? 'bg-gray-700 hover:bg-gray-600'
-                                                                    : 'bg-gray-50 hover:bg-gray-100'}`
+                                                                    ? 'bg-gray-700/50 hover:bg-gray-700 border-gray-600 hover:border-gray-500'
+                                                                    : 'bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300'} shadow-sm hover:shadow-md`
                                                             }
                                                     `}
                                                         onClick={() => setSelectedSubject(subject)}
                                                     >
                                                         <div className="flex justify-between items-center">
-                                                            <div>
-                                                                <h3 className={`font-medium ${textColor}`}>{subject.name}</h3>
-                                                                <p className={`text-sm ${secondaryText}`}>{subject.code} (Sem {subject.semester})</p>
+                                                            <div className="flex-1">
+                                                                <h3 className={`font-bold text-lg ${textColor}`}>{subject.name}</h3>
+                                                                <p className={`text-sm font-medium ${secondaryText} mt-1 flex items-center gap-1`}>
+                                                                    <BookOpen className="w-4 h-4" />
+                                                                    {subject.code} • Semester {subject.semester}
+                                                                </p>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm text-indigo-500 dark:text-indigo-400">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`text-sm font-bold ${selectedSubject?.id === subject.id ? 'text-purple-600 dark:text-purple-400' : 'text-indigo-500 dark:text-indigo-400'}`}>
                                                                     {calculateProgress(subject)}%
                                                                 </span>
                                                                 {isAdmin && (
@@ -1765,10 +1789,14 @@ export default function Dashboard() {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </motion.div>
                                                 ))
                                             ) : (
-                                                <p className={secondaryText}>No subjects found</p>
+                                                <div className={`text-center py-12 ${cardBg} rounded-xl border-2 border-dashed ${borderColor}`}>
+                                                    <BookOpen className={`w-12 h-12 mx-auto mb-3 ${secondaryText}`} />
+                                                    <p className={`${secondaryText} text-lg font-medium`}>No subjects found</p>
+                                                    <p className={`${secondaryText} text-sm mt-2`}>Select a branch, year, and semester to view subjects</p>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -1778,13 +1806,21 @@ export default function Dashboard() {
                             {/* Modules and Progress */}
                             <div className="lg:w-2/3" id="subject-details">
                                 {selectedSubject ? (
-                                    <div className={`${cardBg} p-6 rounded-lg shadow ${borderColor} border`}>
-                                        <div className="flex justify-between items-start mb-2">
+                                    <motion.div 
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className={`${cardBg} p-8 rounded-2xl shadow-xl ${borderColor} border-2`}
+                                    >
+                                        <div className="flex justify-between items-start mb-6">
                                             <div>
-                                                <h2 className={`text-xl font-bold ${textColor}`}>
-                                                    {selectedSubject.name} Modules
+                                                <h2 className={`text-3xl font-black ${textColor} mb-2 flex items-center gap-2`}>
+                                                    <BookOpen className="w-8 h-8" />
+                                                    {selectedSubject.name}
                                                 </h2>
-                                                <p className={`${secondaryText}`}>{selectedSubject.code} (Semester {selectedSubject.semester})</p>
+                                                <p className={`${secondaryText} font-semibold text-lg`}>
+                                                    {selectedSubject.code} • Semester {selectedSubject.semester}
+                                                </p>
                                             </div>
                                             {isAdmin && (
                                                 <button
@@ -1982,18 +2018,33 @@ export default function Dashboard() {
                                                     </motion.div>
                                                 ))
                                             ) : (
-                                                <p className={secondaryText}>No modules defined for this subject</p>
+                                                <div className={`text-center py-12 ${cardBg} rounded-xl border-2 border-dashed ${borderColor}`}>
+                                                    <FileText className={`w-12 h-12 mx-auto mb-3 ${secondaryText}`} />
+                                                    <p className={`${secondaryText} text-lg font-medium`}>No modules defined for this subject</p>
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 ) : (
-                                    <div className={`${cardBg} p-6 rounded-lg shadow flex items-center justify-center h-64 ${borderColor} border`}>
-                                        <p className={secondaryText}>
-                                            {syllabusData.length > 0
-                                                ? "Select a subject to view modules"
-                                                : "No subjects available for selected branch/year/semester"}
-                                        </p>
-                                    </div>
+                                    <motion.div 
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className={`${cardBg} p-12 rounded-2xl shadow-xl flex flex-col items-center justify-center min-h-[400px] ${borderColor} border-2 border-dashed`}
+                                    >
+                                        <div className="text-center">
+                                            <BookOpen className={`w-24 h-24 mx-auto mb-6 ${secondaryText}`} />
+                                            <p className={`${textColor} text-2xl font-bold mb-2`}>
+                                                {syllabusData.length > 0
+                                                    ? "Select a subject to view modules"
+                                                    : "No subjects available"}
+                                            </p>
+                                            <p className={`${secondaryText} text-sm`}>
+                                                {syllabusData.length > 0
+                                                    ? "Choose a subject from the list to see its modules and track your progress"
+                                                    : "No subjects found for the selected branch, year, and semester"}
+                                            </p>
+                                        </div>
+                                    </motion.div>
                                 )}
                             </div>
                         </div>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import Link from 'next/link';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, UserPlus, Lock, AlertCircle, Mail, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import NameCollectionModal from '../../components/NameCollectionModal';
@@ -92,17 +92,24 @@ export default function SignupPage() {
   const googleBtnBorder = isDark ? 'border-gray-600' : 'border-gray-300';
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${bgColor} transition-colors duration-200 relative`}>
+    <div className={`min-h-screen flex items-center justify-center ${bgColor} transition-colors duration-200 relative overflow-hidden`}>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
       {/* Theme Toggle Button */}
       <button
         onClick={toggleTheme}
         className={`
-          fixed top-4 right-4 p-2 rounded-full
+          fixed top-6 right-6 p-3 rounded-2xl
           transition-all duration-300
-          ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-          shadow-md hover:shadow-lg
+          ${isDark ? 'bg-gray-800/80 hover:bg-gray-700/80' : 'bg-white/80 hover:bg-gray-50/80'}
+          backdrop-blur-md shadow-xl hover:shadow-2xl
           focus:outline-none focus:ring-2 focus:ring-offset-2 ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}
-          z-50
+          z-50 transform hover:scale-110 active:scale-95
         `}
         aria-label="Toggle Theme"
       >
@@ -116,7 +123,7 @@ export default function SignupPage() {
               transition={{ duration: 0.3 }}
               className="text-yellow-400"
             >
-              <Sun className="w-5 h-5" />
+              <Sun className="w-6 h-6" />
             </motion.div>
           ) : (
             <motion.div
@@ -127,84 +134,107 @@ export default function SignupPage() {
               transition={{ duration: 0.3 }}
               className="text-indigo-600"
             >
-              <Moon className="w-5 h-5" />
+              <Moon className="w-6 h-6" />
             </motion.div>
           )}
         </AnimatePresence>
       </button>
 
       {/* Signup Box */}
-      <div className={`max-w-md w-full space-y-8 p-8 rounded-lg shadow ${cardBg} ${borderColor} border`}>
-        <h2 className={`text-center text-3xl font-extrabold ${textColor}`}>
-          Create a new account
-        </h2>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`max-w-md w-full mx-4 space-y-8 p-10 rounded-3xl shadow-2xl ${cardBg} ${borderColor} border backdrop-blur-xl relative z-10`}
+      >
+        <div className="text-center">
+          <h2 className={`text-4xl font-black ${textColor} mb-2 flex items-center justify-center gap-3`}>
+            <UserPlus className="w-10 h-10" />
+            Join NeuraMark!
+          </h2>
+          <p className={`${secondaryText} text-sm`}>Start your learning journey today</p>
+        </div>
 
         {error && (
-          <div className={`${errorBg} border px-4 py-3 rounded ${textColor}`}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`${errorBg} border px-4 py-3 rounded-xl ${textColor} text-sm flex items-center gap-2`}
+          >
+            <AlertCircle className="w-4 h-4" />
             {error}
-          </div>
+          </motion.div>
         )}
 
         {/* Google Sign-In Button */}
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-md border ${googleBtnBorder} ${googleBtnBg} shadow-sm ${textColor} transition-colors duration-200 disabled:opacity-50`}
+          className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl border-2 ${googleBtnBorder} ${googleBtnBg} shadow-lg hover:shadow-xl ${textColor} transition-all duration-300 disabled:opacity-50 font-semibold transform hover:scale-105 active:scale-95`}
         >
-          <FcGoogle className="w-5 h-5" />
+          <FcGoogle className="w-6 h-6" />
           <span>Continue with Google</span>
         </button>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className={`w-full border-t ${borderColor}`} />
+            <div className={`w-full border-t ${isDark ? 'border-gray-600' : 'border-gray-300'}`} />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className={`px-2 ${isDark ? 'bg-gray-800' : 'bg-white'} ${secondaryText}`}>
+            <span className={`px-4 ${isDark ? 'bg-gray-800' : 'bg-white'} ${secondaryText} font-medium`}>
               Or sign up with email
             </span>
           </div>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className={`sr-only ${textColor}`}>Email</label>
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <label htmlFor="email" className={`block text-sm font-semibold ${textColor} flex items-center gap-2`}>
+                <Mail className="w-4 h-4" />
+                Email address
+              </label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className={`w-full px-3 py-2 border rounded-md ${borderColor} ${inputBg}`}
-                placeholder="Email address"
+                className={`w-full px-4 py-3 border-2 ${borderColor} rounded-xl ${inputBg} focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-500 transition-all duration-200 placeholder-gray-400`}
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="password" className={`sr-only ${textColor}`}>Password</label>
+            <div className="space-y-2">
+              <label htmlFor="password" className={`block text-sm font-semibold ${textColor} flex items-center gap-2`}>
+                <Lock className="w-4 h-4" />
+                Password
+              </label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
                 minLength={6}
-                className={`w-full px-3 py-2 border rounded-md ${borderColor} ${inputBg}`}
-                placeholder="Password (min 6 characters)"
+                className={`w-full px-4 py-3 border-2 ${borderColor} rounded-xl ${inputBg} focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-500 transition-all duration-200 placeholder-gray-400`}
+                placeholder="Min 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="confirmPassword" className={`sr-only ${textColor}`}>Confirm Password</label>
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className={`block text-sm font-semibold ${textColor} flex items-center gap-2`}>
+                <Shield className="w-4 h-4" />
+                Confirm Password
+              </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
                 minLength={6}
-                className={`w-full px-3 py-2 border rounded-md ${borderColor} ${inputBg}`}
-                placeholder="Confirm Password"
+                className={`w-full px-4 py-3 border-2 ${borderColor} rounded-xl ${inputBg} focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-500 transition-all duration-200 placeholder-gray-400`}
+                placeholder="Confirm your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -215,19 +245,19 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors duration-200"
+              className="w-full py-4 px-6 rounded-2xl shadow-lg text-sm font-bold text-white transition-all duration-300 disabled:opacity-50 transform hover:scale-105 hover:shadow-xl active:scale-95 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              {loading ? 'Creating account...' : 'Sign up'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </div>
         </form>
 
-        <div className={`text-center ${secondaryText}`}>
-          <Link href="/login" className="text-sm text-indigo-600 hover:text-indigo-500">
-            Already have an account? Sign In
+        <div className={`text-center pt-2 ${secondaryText}`}>
+          <Link href="/login" className={`block text-sm font-semibold transition-colors duration-200 ${isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500'}`}>
+            Already have an account? Sign In →
           </Link>
         </div>
-      </div>
+      </motion.div>
 
       {/* Name Collection Modal - Will be shown if needed by AuthContext */}
       {showNameModal && (
