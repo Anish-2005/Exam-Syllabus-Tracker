@@ -730,19 +730,19 @@ export default function Dashboard() {
     };
 
 
-    const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
-    const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
+    const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100';
+    const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white/60 backdrop-blur-sm';
     const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900';
-    const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600';
-    const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
-    const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900';
+    const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-700';
+    const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-purple-300';
+    const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white/90 text-gray-900';
 
     return (
 
         <ProtectedRoute>
             <Suspense fallback={<div>Loading...</div>}>
                 <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
-                    <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                    <nav className={`${theme === 'dark' ? cardBg : 'bg-white/70 backdrop-blur-xl'} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex justify-between items-center h-16 md:h-20">
                                 {/* Left Section */}
