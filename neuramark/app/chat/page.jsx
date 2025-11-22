@@ -567,11 +567,11 @@ export default function ChatPage() {
     const getRoleBadge = (role) => {
         switch (role) {
             case "superadmin":
-                return <span className="ml-1 text-xs bg-green-500 text-white px-1.5 py-0.5 rounded">SUPER ADMIN</span>
+                return <span className="ml-2 text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-bold shadow-lg">SUPER ADMIN</span>
             case "admin":
-                return <span className="ml-1 text-xs bg-green-700 text-white px-1.5 py-0.5 rounded">ADMIN</span>
+                return <span className="ml-2 text-xs bg-gradient-to-r from-green-600 to-teal-600 text-white px-3 py-1 rounded-full font-bold shadow-lg">ADMIN</span>
             case "moderator":
-                return <span className="ml-1 text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded">MOD</span>
+                return <span className="ml-2 text-xs bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-1 rounded-full font-bold shadow-lg">MOD</span>
             default:
                 return null
         }

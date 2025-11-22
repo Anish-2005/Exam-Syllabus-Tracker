@@ -35,14 +35,17 @@ export default function ChatArea({
   showRoomList
 }) {
   return (
-    <div className={`flex-1 ${cardBg} rounded-lg shadow ${borderColor} border overflow-hidden flex flex-col`}>
+    <div className={`flex-1 ${cardBg} rounded-2xl shadow-2xl ${borderColor} border-2 overflow-hidden flex flex-col backdrop-blur-lg`}>
       {!currentRoom ? (
-        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-          <MessageCircle className={`w-16 h-16 mb-6 ${secondaryText}`} />
-          <h3 className={`text-xl font-medium ${textColor} mb-2`}>
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-30"></div>
+            <MessageCircle className={`relative w-24 h-24 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+          </div>
+          <h3 className={`text-3xl font-black ${textColor} mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400`}>
             {showRoomList ? "Select a chat room" : "No room selected"}
           </h3>
-          <p className={`max-w-md ${secondaryText} mb-6`}>
+          <p className={`max-w-md ${secondaryText} mb-8 text-lg`}>
             {showRoomList
               ? "Choose from your available rooms or create a new one"
               : "Browse rooms to start chatting"}
@@ -51,7 +54,7 @@ export default function ChatArea({
             {!showRoomList && (
               <button
                 onClick={() => setShowRoomList(true)}
-                className={`px-4 py-2 ${isDark ? "bg-indigo-700 hover:bg-indigo-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white rounded-md`}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-110 active:scale-95"
               >
                 Browse Rooms
               </button>
@@ -67,34 +70,34 @@ export default function ChatArea({
       ) : (
         <>
           {/* Room Header */}
-          <div className={`p-4 border-b ${borderColor} flex justify-between items-center`}>
+          <div className={`p-6 border-b-2 ${borderColor} flex justify-between items-center bg-gradient-to-r ${isDark ? 'from-gray-800 to-gray-700' : 'from-purple-50 to-pink-50'}`}>
             <div className="flex items-center">
               <button
                 onClick={() => setShowRoomList(true)}
-                className="md:hidden mr-3 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="md:hidden mr-3 p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
               >
-                <ChevronLeft className={`w-5 h-5 ${textColor}`} />
+                <ChevronLeft className={`w-6 h-6 ${textColor}`} />
               </button>
               <div>
-                <div className="flex items-center">
-                  <h2 className={`text-lg font-semibold ${textColor}`}>{currentRoom.name}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-2xl font-black ${textColor}`}>{currentRoom.name}</h2>
                   {currentRoom.isGlobal && (
-                    <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded">Global</span>
+                    <span className="text-xs bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 py-1 rounded-full font-bold shadow-lg">Global</span>
                   )}
-                  {currentRoom.type === "private" && <EyeOff className={`ml-2 w-4 h-4 ${secondaryText}`} />}
+                  {currentRoom.type === "private" && <EyeOff className={`w-5 h-5 ${secondaryText}`} />}
                   {getRoleBadge(getUserRole())}
                 </div>
                 {currentRoom.code && (
-                  <div className="flex items-center mt-1">
-                    <span className={`text-xs font-mono ${secondaryText}`}>Code: {currentRoom.code}</span>
+                  <div className="flex items-center mt-2 gap-2">
+                    <span className={`text-sm font-mono font-bold ${isDark ? 'text-gray-300 bg-gray-700' : 'text-purple-900 bg-purple-100'} px-3 py-1 rounded-lg border-2 ${isDark ? 'border-gray-600' : 'border-purple-200'}`}>Code: {currentRoom.code}</span>
                     <button
                       onClick={() => copyRoomCode(currentRoom.code)}
-                      className="ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all transform hover:scale-110 active:scale-95"
                     >
                       {copiedCode ? (
-                        <Check className="w-3 h-3 text-green-500" />
+                        <Check className="w-4 h-4 text-green-500" />
                       ) : (
-                        <Copy className="w-3 h-3 text-gray-500" />
+                        <Copy className="w-4 h-4 text-gray-500" />
                       )}
                     </button>
                   </div>
@@ -102,14 +105,14 @@ export default function ChatArea({
               </div>
             </div>
 
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               {canManageRequests() && currentRoom.type === "private" && pendingRequests.length > 0 && (
                 <button
                   onClick={() => setShowPendingRequestsModal(true)}
-                  className={`p-2 rounded-full ${isDark ? "bg-amber-800/30 hover:bg-amber-800/40" : "bg-amber-100 hover:bg-amber-200"} relative`}
+                  className={`p-3 rounded-xl ${isDark ? "bg-amber-800/30 hover:bg-amber-800/40" : "bg-amber-100 hover:bg-amber-200"} relative shadow-lg hover:shadow-xl transition-all transform hover:scale-110 active:scale-95`}
                 >
-                  <Clock className={`w-4 h-4 ${isDark ? "text-amber-400" : "text-amber-600"}`} />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <Clock className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
                     {pendingRequests.length}
                   </span>
                 </button>
@@ -117,15 +120,15 @@ export default function ChatArea({
 
               {!currentRoom.isGlobal && (
                 <>
-                  <button onClick={() => setShowMembersModal(true)} className={`p-2 rounded-full ${hoverBg}`}>
-                    <Users className={`w-4 h-4 ${textColor}`} />
+                  <button onClick={() => setShowMembersModal(true)} className="p-3 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-900/50 dark:hover:to-pink-900/50 shadow-lg hover:shadow-xl transition-all transform hover:scale-110 active:scale-95">
+                    <Users className={`w-5 h-5 ${textColor}`} />
                   </button>
                   {getUserRole() !== "member" && (
                     <button
                       onClick={() => setShowRoomSettings(true)}
-                      className={`p-2 rounded-full ${hoverBg}`}
+                      className="p-3 rounded-xl bg-gradient-to-r from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-200 hover:to-blue-200 dark:hover:from-indigo-900/50 dark:hover:to-blue-900/50 shadow-lg hover:shadow-xl transition-all transform hover:scale-110 active:scale-95"
                     >
-                      <Shield className={`w-4 h-4 ${textColor}`} />
+                      <Shield className={`w-5 h-5 ${textColor}`} />
                     </button>
                   )}
                 </>
@@ -140,10 +143,13 @@ export default function ChatArea({
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <MessageCircle className={`w-12 h-12 mb-4 ${secondaryText}`} />
-                <p className={`text-lg ${textColor}`}>No messages yet</p>
-                <p className={`text-sm ${secondaryText} mt-2`}>Send a message to start the conversation</p>
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-20"></div>
+                  <MessageCircle className={`relative w-20 h-20 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                </div>
+                <p className={`text-2xl font-bold ${textColor} mb-2`}>No messages yet</p>
+                <p className={`text-base ${secondaryText}`}>Send a message to start the conversation</p>
               </div>
             ) : (
               <div className="flex flex-col-reverse space-y-reverse space-y-4">
@@ -214,22 +220,22 @@ export default function ChatArea({
           </div>
 
           {/* Message Input */}
-          <div className={`border-t ${borderColor} p-4`}>
-            <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+          <div className={`border-t-2 ${borderColor} p-6 bg-gradient-to-r ${isDark ? 'from-gray-800 to-gray-700' : 'from-purple-50 to-pink-50'}`}>
+            <form onSubmit={handleSendMessage} className="flex items-center space-x-4">
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type your message..."
-                className={`flex-1 px-4 py-3 rounded-full ${inputBg} focus:outline-none focus:ring-2 ${isDark ? "focus:ring-indigo-500" : "focus:ring-indigo-300"} ${borderColor} border`}
+                className={`flex-1 px-6 py-4 rounded-2xl ${inputBg} focus:outline-none focus:ring-4 ${isDark ? "focus:ring-purple-500/30" : "focus:ring-purple-300/50"} ${borderColor} border-2 text-base font-medium transition-all`}
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={!newMessage.trim() || loading}
-                className={`p-3 rounded-full ${newMessage.trim() ? (isDark ? "bg-indigo-600 hover:bg-indigo-500" : "bg-indigo-600 hover:bg-indigo-700") : isDark ? "bg-gray-700" : "bg-gray-200"} text-white transition-colors`}
+                className={`p-4 rounded-2xl ${newMessage.trim() ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl" : isDark ? "bg-gray-700" : "bg-gray-200"} text-white transition-all transform hover:scale-110 active:scale-95 disabled:transform-none disabled:opacity-50`}
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-6 h-6" />
               </button>
             </form>
           </div>
