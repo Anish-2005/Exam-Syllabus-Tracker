@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useAuth } from './context/AuthContext'
 import { useTheme } from './context/ThemeContext'
-import { Moon, Sun, BookOpen } from 'lucide-react'
+import { Moon, Sun, BookOpen, ArrowRight, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 
@@ -91,7 +91,7 @@ export default function Home() {
               alt="NeuraMark Logo"
               width={100}
               height={100}
-              className="relative rounded-3xl shadow-2xl ring-4 ring-white/20 shrink-0 transform group-hover:scale-110 transition duration-300"
+              className="relative rounded-3xl shadow-2xl shrink-0 transform group-hover:scale-110 transition duration-300"
               priority
             />
           </div>
@@ -129,15 +129,26 @@ export default function Home() {
             className="group relative px-10 py-5 rounded-2xl font-bold text-lg text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 overflow-hidden"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
-              {user ? '🚀 Go to Dashboard' : '✨ Get Started'}
+              {user ? (
+                <>
+                  Go to Dashboard
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Get Started
+                </>
+              )}
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </Link>
           <Link
             href="/about"
-            className="px-10 py-5 rounded-2xl font-bold text-lg border-2 border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 dark:hover:bg-indigo-500 hover:text-white transition-all duration-300 backdrop-blur-sm hover:shadow-xl transform hover:scale-105"
+            className="px-8 py-4 rounded-2xl border-2 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 flex items-center gap-2 border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 dark:hover:bg-indigo-500 hover:text-white backdrop-blur-sm"
           >
-            📚 Learn More
+            <BookOpen className="w-5 h-5" />
+            Learn More
           </Link>
         </motion.div>
         
