@@ -1,53 +1,57 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { RefreshCw, Menu, Moon, Sun } from 'lucide-react'
+import { RefreshCw, Menu, Moon, Sun, ArrowLeft } from 'lucide-react'
 import { useTheme } from '@/app/context/ThemeContext'
 import { AnimatePresence, motion } from 'framer-motion'
 import UserAvatar from './UserAvatar'
 
 export default function ProgressHeader({ user, loading, onRefresh, onMenuOpen }) {
   const { theme, toggleTheme, isDark } = useTheme()
-  const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-  const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-  const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-  const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+  const textColor = isDark ? 'text-gray-100' : 'text-gray-900'
+  const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg'
+  const borderColor = isDark ? 'border-gray-700' : 'border-purple-200'
+  const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600'
 
   return (
-    <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+    <nav className={`${cardBg} shadow-xl ${borderColor} border-b sticky top-0 z-50 backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
           <div className="flex items-center space-x-3 min-w-0">
             <Link
               href="/dashboard"
-              className="p-2 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-purple-100'}`}
               aria-label="Back to Dashboard"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
+              <ArrowLeft className={`h-5 w-5 ${textColor}`} />
             </Link>
-            <Image
-              src="/emblem.png"
-              alt="NeuraMark Logo"
-              width={36}
-              height={36}
-              className="rounded-sm shadow-sm shrink-0"
-              priority
-            />
-            <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
-              My Progress
-            </h1>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-40"></div>
+              <Image
+                src="/emblem.png"
+                alt="NeuraMark Logo"
+                width={40}
+                height={40}
+                className="rounded-lg shadow-lg shrink-0 relative"
+                priority
+              />
+            </div>
+            <div>
+              <h1 className={`text-lg sm:text-2xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-xs ${isDark ? 'bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
+                My Progress
+              </h1>
+              <p className={`text-xs ${secondaryText} hidden sm:block`}>Track Your Learning</p>
+            </div>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
             <button
               onClick={onRefresh}
-              className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md hover:from-indigo-700 hover:to-blue-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 text-sm font-medium shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
-              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh Data</span>
             </button>
 
             <UserAvatar user={user} size="sm" />
@@ -56,13 +60,12 @@ export default function ProgressHeader({ user, loading, onRefresh, onMenuOpen })
               {user?.displayName || user?.email}
             </span>
 
-            {/* Original Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-full transition-all duration-300
-                ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+              className={`p-2.5 rounded-xl transition-all duration-300 transform hover:scale-110 active:scale-95
+                ${isDark ? 'bg-gray-700/80 hover:bg-gray-600/80' : 'bg-white/80 hover:bg-purple-100'}
+                shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2
+                ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-purple-500'}`}
               aria-label="Toggle Theme"
             >
               <AnimatePresence mode="wait" initial={false}>

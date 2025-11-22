@@ -3,9 +3,11 @@ import ProtectedRoute from '@/app/components/ProtectedRoute'
 import { useAuth } from '@/app/context/AuthContext'
 import { useTheme } from '@/app/context/ThemeContext'
 import { useEffect, useState } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/app/lib/firebase'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { Filter } from 'lucide-react'
 import ProgressHeader from './components/ProgressHeader'
 import ProgressSidebar from './components/ProgressSidebar'
 import ProgressSubject from './components/ProgressSubject'
@@ -20,14 +22,17 @@ export default function MyProgressPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [syllabusData, setSyllabusData] = useState({})
   const [expandedSubjects, setExpandedSubjects] = useState([])
+  const [selectedSemester, setSelectedSemester] = useState('all')
+  const [userPreferences, setUserPreferences] = useState(null)
   const router = useRouter()
 
-  // Theme styles
-  const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-  const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-  const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-  const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-  const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+  // Enhanced theme styles
+  const isDark = theme === 'dark'
+  const bgColor = isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50'
+  const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg'
+  const textColor = isDark ? 'text-gray-100' : 'text-gray-900'
+  const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600'
+  const borderColor = isDark ? 'border-gray-700' : 'border-purple-200'
 
   useEffect(() => {
     if (user) {
@@ -38,6 +43,20 @@ export default function MyProgressPage() {
   const fetchUserData = async () => {
     setLoading(true)
     try {
+      // Fetch user preferences
+      const preferencesDoc = await getDoc(doc(db, 'userPreferences', user.uid))
+      if (preferencesDoc.exists()) {
+        const prefs = preferencesDoc.data()
+        setUserPreferences(prefs)
+        setSelectedSemester(prefs.defaultSemester || 'all')
+      } else {
+        // Create default preferences
+        const defaultPrefs = { defaultSemester: 'all' }
+        await setDoc(doc(db, 'userPreferences', user.uid), defaultPrefs)
+        setUserPreferences(defaultPrefs)
+        setSelectedSemester('all')
+      }
+
       // Fetch user progress
       const progressDoc = await getDoc(doc(db, 'userProgress', user.uid))
       if (progressDoc.exists()) {
@@ -75,6 +94,41 @@ export default function MyProgressPage() {
         ? prev.filter(id => id !== subjectId)
         : [...prev, subjectId]
     )
+  }
+
+  const handleSemesterChange = async (semester) => {
+    setSelectedSemester(semester)
+    try {
+      await updateDoc(doc(db, 'userPreferences', user.uid), {
+        defaultSemester: semester
+      })
+    } catch (error) {
+      console.error('Error saving semester preference:', error)
+    }
+  }
+
+  const getAvailableSemesters = () => {
+    const semesters = new Set()
+    Object.values(syllabusData).forEach(subject => {
+      if (subject.semester) {
+        semesters.add(subject.semester)
+      }
+    })
+    return Array.from(semesters).sort((a, b) => a - b)
+  }
+
+  const filterSubjectsBySemester = () => {
+    if (!userProgress) return []
+    
+    return Object.entries(userProgress)
+      .filter(([key]) => key.startsWith('subject_'))
+      .filter(([key]) => {
+        const subjectId = key.replace('subject_', '')
+        const subjectInfo = syllabusData[subjectId]
+        if (!subjectInfo) return false
+        if (selectedSemester === 'all') return true
+        return subjectInfo.semester === parseInt(selectedSemester)
+      })
   }
 
   const calculateProgress = (subjectProgress, subjectId) => {
@@ -131,15 +185,31 @@ export default function MyProgressPage() {
           logout={logout}
         />
 
-        <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
-          <div className={`${cardBg} p-4 sm:p-6 rounded-lg shadow ${borderColor} border mt-4`}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-              <div>
-                <h2 className={`text-xl font-bold ${textColor} mb-1`}>
-                  Your Learning Progress
-                </h2>
-                <div className={`flex items-center space-x-2 ${secondaryText} text-sm`}>
-                  {user?.email}
+        <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor} py-6`}>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`${cardBg} p-6 sm:p-8 rounded-2xl shadow-2xl ${borderColor} border-2`}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-40"></div>
+                  <div className="relative p-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h2 className={`text-2xl sm:text-3xl font-bold ${textColor} mb-1`}>
+                    Your Learning Progress
+                  </h2>
+                  <div className={`flex items-center space-x-2 ${secondaryText} text-sm font-medium`}>
+                    <span className="px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+                      {user?.email}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -149,31 +219,83 @@ export default function MyProgressPage() {
             ) : !userProgress ? (
               <ProgressEmptyState />
             ) : (
-              <div className="space-y-4">
-                {Object.entries(userProgress).map(([key, value]) => {
-                  if (key === 'updatedAt') return null
+              <>
+                {/* Semester Filter */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Filter className={`w-5 h-5 ${secondaryText}`} />
+                      <span className={`text-sm font-medium ${textColor}`}>Filter by Semester:</span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleSemesterChange('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105 active:scale-95 ${
+                          selectedSemester === 'all'
+                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                            : isDark
+                            ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                            : 'bg-white/60 text-gray-700 hover:bg-white border border-purple-200'
+                        }`}
+                      >
+                        All Semesters
+                      </button>
+                      {getAvailableSemesters().map(semester => (
+                        <button
+                          key={semester}
+                          onClick={() => handleSemesterChange(semester.toString())}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105 active:scale-95 ${
+                            selectedSemester === semester.toString()
+                              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                              : isDark
+                              ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                              : 'bg-white/60 text-gray-700 hover:bg-white border border-purple-200'
+                          }`}
+                        >
+                          Semester {semester}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-                  const subjectId = key.replace('subject_', '')
-                  const subjectInfo = syllabusData[subjectId]
-                  if (!subjectInfo) return null
+                <div className="space-y-4">
+                {filterSubjectsBySemester().length === 0 ? (
+                  <div className={`text-center py-16`}>
+                    <div className="relative inline-block">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur-xl opacity-20"></div>
+                      <div className={`relative p-6 rounded-2xl ${isDark ? 'bg-gray-700/50' : 'bg-white/80'} shadow-xl`}>
+                        <Filter className={`w-16 h-16 mx-auto mb-4 ${secondaryText}`} />
+                        <h3 className={`text-xl font-bold ${textColor} mb-2`}>No Subjects Found</h3>
+                        <p className={`${secondaryText}`}>No subjects found for the selected semester.</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  filterSubjectsBySemester().map(([key, value]) => {
+                    const subjectId = key.replace('subject_', '')
+                    const subjectInfo = syllabusData[subjectId]
+                    if (!subjectInfo) return null
 
-                  const progress = calculateProgress(value, subjectId)
-                  const isExpanded = expandedSubjects.includes(subjectId)
+                    const progress = calculateProgress(value, subjectId)
+                    const isExpanded = expandedSubjects.includes(subjectId)
 
-                  return (
-                    <ProgressSubject
-                      key={key}
-                      subject={subjectInfo}
-                      progress={progress}
-                      isExpanded={isExpanded}
-                      onToggle={() => toggleSubjectExpand(subjectId)}
-                      modules={subjectInfo.modules || []}
-                    />
-                  )
-                })}
+                    return (
+                      <ProgressSubject
+                        key={key}
+                        subject={subjectInfo}
+                        progress={progress}
+                        isExpanded={isExpanded}
+                        onToggle={() => toggleSubjectExpand(subjectId)}
+                        modules={subjectInfo.modules || []}
+                      />
+                    )
+                  })
+                )}
               </div>
+              </>
             )}
-          </div>
+          </motion.div>
         </main>
       </div>
     </ProtectedRoute>

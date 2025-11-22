@@ -10,16 +10,16 @@ export default function ProgressSubject({
   onToggle, 
   modules 
 }) {
-  const { theme } = useTheme()
-  const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-  const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-  const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-  const bgColor = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
+  const { theme, isDark } = useTheme()
+  const textColor = isDark ? 'text-gray-100' : 'text-gray-900'
+  const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600'
+  const borderColor = isDark ? 'border-gray-700' : 'border-purple-200'
+  const bgColor = isDark ? 'bg-gray-700/50' : 'bg-white/60'
 
   return (
-    <div className={`rounded-lg ${bgColor} border ${borderColor} overflow-hidden transition-all duration-200`}>
+    <div className={`rounded-xl ${bgColor} border-2 ${borderColor} overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm`}>
       <div
-        className="p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+        className={`p-5 cursor-pointer transition-all ${isDark ? 'hover:bg-gray-600/70' : 'hover:bg-purple-50/80'}`}
         onClick={onToggle}
       >
         <div className="flex justify-between items-center">
@@ -45,11 +45,11 @@ export default function ProgressSubject({
                 {progress.completedCount} of {progress.totalModules} modules
               </div>
             </div>
-            <button className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+            <button className={`p-2 rounded-lg transition-all transform hover:scale-110 active:scale-95 ${isDark ? 'bg-gray-600/50 hover:bg-gray-600' : 'bg-purple-100 hover:bg-purple-200'}`}>
               {isExpanded ? (
-                <ChevronUp className="w-5 h-5" />
+                <ChevronUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               ) : (
-                <ChevronDown className="w-5 h-5" />
+                <ChevronDown className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               )}
             </button>
           </div>
@@ -57,7 +57,7 @@ export default function ProgressSubject({
       </div>
 
       {isExpanded && (
-        <div className={`p-4 pt-0 border-t ${borderColor} animate-fadeIn`}>
+        <div className={`p-5 pt-0 border-t-2 ${borderColor} animate-fadeIn`}>
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1">
               <span className={`text-sm ${secondaryText}`}>
@@ -69,11 +69,11 @@ export default function ProgressSubject({
                 {progress.percentage}%
               </span>
             </div>
-            <div className={`w-full ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2.5`}>
+            <div className={`w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-3 shadow-inner`}>
               <div
-                className={`h-2.5 rounded-full ${
-                  progress.percentage === 100 ? 'bg-green-500' : 'bg-indigo-500'
-                }`}
+                className={`h-3 rounded-full transition-all duration-500 ${
+                  progress.percentage === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                } shadow-lg`}
                 style={{ width: `${progress.percentage}%` }}
               ></div>
             </div>
