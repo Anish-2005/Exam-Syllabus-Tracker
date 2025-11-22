@@ -1152,7 +1152,7 @@ export default function Dashboard() {
                                                 setSelectedSemester(null);
                                                 setSelectedSubject(null);
                                             }}
-                                            className={`block w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
+                                            className={`block w-full px-4 py-3 text-base border-2 ${borderColor} focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-500 rounded-xl ${inputBg} font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                                             disabled={years.length === 0}
                                         >
                                             {years.length === 0 ? (
