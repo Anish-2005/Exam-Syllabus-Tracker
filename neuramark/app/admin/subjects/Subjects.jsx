@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { useTheme } from '@/app/context/ThemeContext';
-import {User,RefreshCw,Menu, Moon, Sun, Trash2, Edit, ArrowLeft ,X} from 'lucide-react';
+import {User,RefreshCw,Menu, Moon, Sun, Trash2, Edit, ArrowLeft ,X, BookOpen, GraduationCap, Layers} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -20,11 +20,11 @@ export default function AdminSubjects() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
-    const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
-    const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900';
-    const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600';
-    const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
+    const bgColor = isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
+    const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg';
+    const textColor = isDark ? 'text-gray-100' : 'text-gray-900';
+    const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600';
+    const borderColor = isDark ? 'border-gray-700' : 'border-purple-200';
 
     useEffect(() => {
         if (user && user.email === "anishseth0510@gmail.com") {
@@ -89,42 +89,46 @@ export default function AdminSubjects() {
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
                  {/* Navigation */}
-                <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                <nav className={`${cardBg} shadow-xl ${borderColor} border-b sticky top-0 z-50 backdrop-blur-xl`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20">
                             {/* Left Section */}
                             <div className="flex items-center space-x-3 min-w-0">
                                 <Link
                                     href="/dashboard"
-                                    className="p-2 rounded-full transition-colors"
+                                    className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-purple-100'}`}
                                     aria-label="Back to Dashboard"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                    </svg>
+                                    <ArrowLeft className={`h-5 w-5 ${textColor}`} />
                                 </Link>
-                                <Image
-                                    src="/emblem.png"
-                                    alt="NeuraMark Logo"
-                                    width={36}
-                                    height={36}
-                                    className="rounded-sm shadow-sm shrink-0"
-                                    priority
-                                />
-                                <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
-                                    Subjects
-                                </h1>
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-40"></div>
+                                    <Image
+                                        src="/emblem.png"
+                                        alt="NeuraMark Logo"
+                                        width={40}
+                                        height={40}
+                                        className="rounded-lg shadow-lg shrink-0 relative"
+                                        priority
+                                    />
+                                </div>
+                                <div>
+                                    <h1 className={`text-lg sm:text-2xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-xs ${isDark ? 'bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
+                                        Subjects
+                                    </h1>
+                                    <p className={`text-xs ${secondaryText} hidden sm:block`}>Manage Syllabus</p>
+                                </div>
                             </div>
 
                             {/* Desktop Controls */}
                             <div className="hidden md:flex items-center space-x-4">
                                 <button
                                     onClick={fetchAllSubjects}
-                                    className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md hover:from-indigo-700 hover:to-blue-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+                                    className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 text-sm font-medium shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={loading}
                                 >
-                                    <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-                                    <span>Refresh</span>
+                                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                                    <span>Refresh Data</span>
                                 </button>
 
                                 {user?.photoURL ? (
@@ -147,10 +151,10 @@ export default function AdminSubjects() {
 
                                 <button
                                     onClick={toggleTheme}
-                                    className={`p-2 rounded-full transition-all duration-300
-                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                        shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                                    className={`p-2.5 rounded-xl transition-all duration-300 transform hover:scale-110 active:scale-95
+                        ${isDark ? 'bg-gray-700/80 hover:bg-gray-600/80' : 'bg-white/80 hover:bg-purple-100'}
+                        shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-purple-500'}`}
                                     aria-label="Toggle Theme"
                                 >
                                     <AnimatePresence mode="wait" initial={false}>
@@ -341,48 +345,71 @@ export default function AdminSubjects() {
 
 
                 <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 ${textColor}`}>
-                    <div className={`${cardBg} p-6 rounded-lg shadow ${borderColor} border`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className={`text-xl font-bold ${textColor}`}>
-                                All Subjects ({allSubjects.length})
-                            </h2>
+                    <div className={`${cardBg} p-6 sm:p-8 rounded-2xl shadow-2xl ${borderColor} border-2`}>
+                        <div className="flex justify-between items-center mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg">
+                                    <BookOpen className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className={`text-2xl sm:text-3xl font-bold ${textColor}`}>
+                                        All Subjects
+                                    </h2>
+                                    <p className={`text-sm ${secondaryText}`}>
+                                        {allSubjects.length} {allSubjects.length === 1 ? 'Subject' : 'Subjects'} in Database
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         {loading ? (
-                            <div className="flex justify-center items-center h-40">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                            <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                                <div className="relative">
+                                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-indigo-600"></div>
+                                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-xl"></div>
+                                </div>
+                                <p className={`text-sm font-medium ${secondaryText} animate-pulse`}>Loading subjects...</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                    <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                            <div className="overflow-x-auto rounded-xl">
+                                <table className="min-w-full divide-y-2 divide-gray-200 dark:divide-gray-700">
+                                    <thead className={`${isDark ? 'bg-gray-700/50' : 'bg-gradient-to-r from-indigo-50 to-purple-50'}`}>
                                         <tr>
-                                            <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
-                                                Subject
+                                            <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold ${textColor} uppercase tracking-wider`}>
+                                                <div className="flex items-center gap-2">
+                                                    <BookOpen className="w-4 h-4" />
+                                                    Subject
+                                                </div>
                                             </th>
-                                            <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
+                                            <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold ${textColor} uppercase tracking-wider`}>
                                                 Code
                                             </th>
-                                            <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
-                                                Branch
+                                            <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold ${textColor} uppercase tracking-wider`}>
+                                                <div className="flex items-center gap-2">
+                                                    <GraduationCap className="w-4 h-4" />
+                                                    Branch
+                                                </div>
                                             </th>
-                                            <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
+                                            <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold ${textColor} uppercase tracking-wider`}>
                                                 Year
                                             </th>
-                                            <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
+                                            <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold ${textColor} uppercase tracking-wider`}>
                                                 Semester
                                             </th>
-                                            <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
-                                                Modules
+                                            <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold ${textColor} uppercase tracking-wider`}>
+                                                <div className="flex items-center gap-2">
+                                                    <Layers className="w-4 h-4" />
+                                                    Modules
+                                                </div>
                                             </th>
-                                            <th scope="col" className={`px-6 py-3 text-right text-xs font-medium ${secondaryText} uppercase tracking-wider`}>
+                                            <th scope="col" className={`px-6 py-4 text-right text-xs font-semibold ${textColor} uppercase tracking-wider`}>
                                                 Actions
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                                    <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${isDark ? 'bg-gray-800/50' : 'bg-white/60'}`}>
                                         {allSubjects.map((subject) => (
-                                            <tr key={subject.id} className={`hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                                            <tr key={subject.id} className={`transition-all ${isDark ? 'hover:bg-gray-700/70' : 'hover:bg-purple-50/80'}`}>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className={`text-sm font-medium ${textColor}`}>
                                                         {subject.name}
@@ -414,18 +441,18 @@ export default function AdminSubjects() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <div className="flex justify-end space-x-2">
+                                                    <div className="flex justify-end gap-2">
                                                         <button
                                                             onClick={() => handleViewSubject(subject)}
-                                                            className={`text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300`}
+                                                            className={`px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 active:scale-95 ${isDark ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white'} shadow-md hover:shadow-lg`}
                                                         >
                                                             View
                                                         </button>
                                                         <button
                                                             onClick={() => deleteSubject(subject.id)}
-                                                            className={`text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300`}
+                                                            className={`p-2 rounded-lg transition-all transform hover:scale-110 active:scale-95 ${isDark ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400' : 'bg-red-100 hover:bg-red-200 text-red-600'} shadow-sm hover:shadow-md`}
                                                         >
-                                                            Delete
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 </td>
@@ -437,8 +464,15 @@ export default function AdminSubjects() {
                         )}
 
                         {!loading && allSubjects.length === 0 && (
-                            <div className={`text-center py-8 ${secondaryText}`}>
-                                No subjects found in the database.
+                            <div className={`text-center py-16`}>
+                                <div className="relative inline-block">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur-xl opacity-20"></div>
+                                    <div className={`relative p-6 rounded-2xl ${isDark ? 'bg-gray-700/50' : 'bg-white/80'} shadow-xl`}>
+                                        <BookOpen className={`w-16 h-16 mx-auto mb-4 ${secondaryText}`} />
+                                        <h3 className={`text-xl font-bold ${textColor} mb-2`}>No Subjects Found</h3>
+                                        <p className={`${secondaryText}`}>No subjects are currently available in the database.</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
