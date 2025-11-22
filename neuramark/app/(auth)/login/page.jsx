@@ -226,7 +226,7 @@ export default function LoginPage() {
             Forgot password?
           </Link>
         </div>
-      </div>
+      </motion.div>
 
       {/* Name Collection Modal */}
       {showNameModal && (

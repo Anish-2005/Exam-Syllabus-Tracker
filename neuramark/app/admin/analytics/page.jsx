@@ -5,7 +5,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useTheme } from '@/app/context/ThemeContext';
-import { Menu,BarChart2, Target, Award, TrendingUp, User, Mail, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, Sun, Moon,X } from 'lucide-react';
+import { Menu, BarChart2, Target, Award, TrendingUp, User, Mail, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, Sun, Moon, X, Search } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { db } from '@/app/lib/firebase';
@@ -27,15 +27,15 @@ export default function AdminKraKpiPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedUser, setExpandedUser] = useState(null);
 
-    // Theme styles
-    const bgColor = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
-    const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
-    const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900';
-    const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600';
-    const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
-    const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900';
-    const activeTabBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200';
-    const inactiveTabBg = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100';
+    // Enhanced theme styles
+    const bgColor = isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
+    const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg';
+    const textColor = isDark ? 'text-gray-100' : 'text-gray-900';
+    const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600';
+    const borderColor = isDark ? 'border-gray-700' : 'border-purple-200';
+    const inputBg = isDark ? 'bg-gray-700/80 text-white' : 'bg-white/90 text-gray-900';
+    const activeTabBg = isDark ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gradient-to-r from-indigo-500 to-purple-500';
+    const inactiveTabBg = isDark ? 'bg-gray-700/50' : 'bg-white/60';
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -266,43 +266,46 @@ export default function AdminKraKpiPage() {
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200 pb-8`}>
                 {/* Navigation */}
-                 {/* Navigation */}
-                <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                <nav className={`${cardBg} shadow-xl ${borderColor} border-b sticky top-0 z-50 backdrop-blur-xl`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16 md:h-20">
                             {/* Left Section */}
                             <div className="flex items-center space-x-3 min-w-0">
                                 <Link
                                     href="/dashboard"
-                                    className="p-2 rounded-full transition-colors"
+                                    className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-purple-100'}`}
                                     aria-label="Back to Dashboard"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                    </svg>
+                                    <ArrowLeft className={`h-5 w-5 ${textColor}`} />
                                 </Link>
-                                <Image
-                                    src="/emblem.png"
-                                    alt="NeuraMark Logo"
-                                    width={36}
-                                    height={36}
-                                    className="rounded-sm shadow-sm shrink-0"
-                                    priority
-                                />
-                                <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
-                                    Learning Analytics
-                                </h1>
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-40"></div>
+                                    <Image
+                                        src="/emblem.png"
+                                        alt="NeuraMark Logo"
+                                        width={40}
+                                        height={40}
+                                        className="rounded-lg shadow-lg shrink-0 relative"
+                                        priority
+                                    />
+                                </div>
+                                <div>
+                                    <h1 className={`text-lg sm:text-2xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-xs ${isDark ? 'bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
+                                        Learning Analytics
+                                    </h1>
+                                    <p className={`text-xs ${secondaryText} hidden sm:block`}>KPI & KRA Dashboard</p>
+                                </div>
                             </div>
 
                             {/* Desktop Controls */}
                             <div className="hidden md:flex items-center space-x-4">
                                 <button
                                     onClick={fetchAllData}
-                                    className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md hover:from-indigo-700 hover:to-blue-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+                                    className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 text-sm font-medium shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={loading}
                                 >
-                                    <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-                                    <span>Refresh</span>
+                                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                                    <span>Refresh Data</span>
                                 </button>
 
                                 {user?.photoURL ? (
@@ -325,10 +328,10 @@ export default function AdminKraKpiPage() {
 
                                 <button
                                     onClick={toggleTheme}
-                                    className={`p-2 rounded-full transition-all duration-300
-                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                        shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                                    className={`p-2.5 rounded-xl transition-all duration-300 transform hover:scale-110 active:scale-95
+                        ${isDark ? 'bg-gray-700/80 hover:bg-gray-600/80' : 'bg-white/80 hover:bg-purple-100'}
+                        shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-purple-500'}`}
                                     aria-label="Toggle Theme"
                                 >
                                     <AnimatePresence mode="wait" initial={false}>
@@ -518,35 +521,39 @@ export default function AdminKraKpiPage() {
                 </AnimatePresence>
 
                 {/* Main Content */}
-                <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
-                    <div className={`${cardBg} p-4 sm:p-6 rounded-lg shadow ${borderColor} border mt-4`}>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <main className={`max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor} py-6`}>
+                    <div className={`${cardBg} p-6 sm:p-8 rounded-2xl shadow-2xl ${borderColor} border-2`}>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
                             <div>
-                                <h2 className={`text-xl font-bold ${textColor} mb-1`}>
+                                <h2 className={`text-2xl sm:text-3xl font-bold ${textColor} mb-2 flex items-center gap-3`}>
+                                    <div className="p-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500">
+                                        <BarChart2 className="w-6 h-6 text-white" />
+                                    </div>
                                     User Learning Analytics
                                 </h2>
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2 ml-14">
                                     {currentUser?.photoURL ? (
                                         <Image
                                             src={currentUser.photoURL}
                                             alt={currentUser.displayName || 'Admin'}
-                                            width={24}
-                                            height={24}
-                                            className="rounded-full"
+                                            width={28}
+                                            height={28}
+                                            className="rounded-full ring-2 ring-indigo-500"
                                         />
                                     ) : (
-                                        <div className={`h-6 w-6 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300`}>
-                                            <User size={14} />
+                                        <div className={`h-7 w-7 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-500 text-white`}>
+                                            <User size={16} />
                                         </div>
                                     )}
-                                    <span className={`text-sm ${secondaryText}`}>{currentUser?.email}</span>
+                                    <span className={`text-sm font-medium ${secondaryText}`}>{currentUser?.email}</span>
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white">ADMIN</span>
                                 </div>
                             </div>
                             
-                            <div className="flex mt-4 sm:mt-0 space-x-2">
+                            <div className="flex mt-4 sm:mt-0 space-x-3">
                                 <button
                                     onClick={() => setActiveTab('kpi')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'kpi' ? `${activeTabBg} ${textColor}` : `${inactiveTabBg} ${secondaryText}`}`}
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 active:scale-95 shadow-md ${activeTab === 'kpi' ? `${activeTabBg} text-white shadow-lg` : `${inactiveTabBg} ${secondaryText} hover:shadow-lg`}`}
                                 >
                                     <div className="flex items-center">
                                         <Target className="w-4 h-4 mr-2" />
@@ -555,7 +562,7 @@ export default function AdminKraKpiPage() {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('kra')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'kra' ? `${activeTabBg} ${textColor}` : `${inactiveTabBg} ${secondaryText}`}`}
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 active:scale-95 shadow-md ${activeTab === 'kra' ? `${activeTabBg} text-white shadow-lg` : `${inactiveTabBg} ${secondaryText} hover:shadow-lg`}`}
                                 >
                                     <div className="flex items-center">
                                         <Award className="w-4 h-4 mr-2" />
@@ -565,19 +572,34 @@ export default function AdminKraKpiPage() {
                             </div>
                         </div>
 
-                        <div className="mb-6">
-                            <input
-                                type="text"
-                                placeholder="Search users..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-md text-sm ${borderColor} ${inputBg}`}
-                            />
+                        <div className="mb-8 relative">
+                            <div className="relative">
+                                <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${secondaryText}`} />
+                                <input
+                                    type="text"
+                                    placeholder="Search users by name, email, or ID..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className={`w-full pl-12 pr-4 py-3 border-2 rounded-xl text-sm font-medium ${borderColor} ${inputBg} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm hover:shadow-md transition-all`}
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} transition-colors`}
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {loading ? (
-                            <div className="flex justify-center items-center h-40">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                            <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                                <div className="relative">
+                                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-indigo-600"></div>
+                                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-xl"></div>
+                                </div>
+                                <p className={`text-sm font-medium ${secondaryText} animate-pulse`}>Loading analytics data...</p>
                             </div>
                         ) : (
                             <div className="space-y-6">
@@ -588,20 +610,28 @@ export default function AdminKraKpiPage() {
                                     const hasProgress = userKpiData.length > 0;
 
                                     return (
-                                        <div key={user.id} className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}>
+                                        <motion.div 
+                                            key={user.id} 
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className={`p-5 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-white/60'} border-2 ${borderColor} shadow-lg hover:shadow-xl transition-all backdrop-blur-sm`}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
                                                     {user.photoURL ? (
-                                                        <Image
-                                                            src={user.photoURL}
-                                                            alt={user.name}
-                                                            width={40}
-                                                            height={40}
-                                                            className="rounded-full"
-                                                        />
+                                                        <div className="relative">
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-40"></div>
+                                                            <Image
+                                                                src={user.photoURL}
+                                                                alt={user.name}
+                                                                width={48}
+                                                                height={48}
+                                                                className="rounded-full ring-2 ring-indigo-500 relative"
+                                                            />
+                                                        </div>
                                                     ) : (
-                                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300`}>
-                                                            <User size={18} />
+                                                        <div className={`h-12 w-12 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg`}>
+                                                            <User size={20} />
                                                         </div>
                                                     )}
                                                     <div>
@@ -611,32 +641,32 @@ export default function AdminKraKpiPage() {
                                                 </div>
                                                 <button
                                                     onClick={() => toggleUserExpand(user.id)}
-                                                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                    className={`p-2 rounded-lg transition-all transform hover:scale-110 active:scale-95 ${isDark ? 'bg-gray-600/50 hover:bg-gray-600' : 'bg-purple-100 hover:bg-purple-200'}`}
                                                 >
                                                     {expandedUser === user.id ? (
-                                                        <ChevronUp className="w-5 h-5" />
+                                                        <ChevronUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                                     ) : (
-                                                        <ChevronDown className="w-5 h-5" />
+                                                        <ChevronDown className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                                     )}
                                                 </button>
                                             </div>
 
-                                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                                                <div className={`p-2 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
-                                                    <div className={`${secondaryText}`}>Created</div>
-                                                    <div>{formatDate(user.createdAt)}</div>
+                                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                                                <div className={`p-3 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
+                                                    <div className={`${secondaryText} text-xs font-medium mb-1`}>Created</div>
+                                                    <div className={`font-semibold ${textColor}`}>{formatDate(user.createdAt)}</div>
                                                 </div>
-                                                <div className={`p-2 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
-                                                    <div className={`${secondaryText}`}>Updated</div>
-                                                    <div>{formatDate(user.updatedAt)}</div>
+                                                <div className={`p-3 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-purple-50 to-pink-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
+                                                    <div className={`${secondaryText} text-xs font-medium mb-1`}>Updated</div>
+                                                    <div className={`font-semibold ${textColor}`}>{formatDate(user.updatedAt)}</div>
                                                 </div>
-                                                <div className={`p-2 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
-                                                    <div className={`${secondaryText}`}>Subjects</div>
-                                                    <div>{userKpiData.length}</div>
+                                                <div className={`p-3 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-green-50 to-emerald-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
+                                                    <div className={`${secondaryText} text-xs font-medium mb-1`}>Subjects</div>
+                                                    <div className={`font-bold text-lg ${textColor}`}>{userKpiData.length}</div>
                                                 </div>
-                                                <div className={`p-2 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${borderColor}`}>
-                                                    <div className={`${secondaryText}`}>Avg Progress</div>
-                                                    <div>
+                                                <div className={`p-3 rounded-xl ${isDark ? 'bg-gray-800/80' : 'bg-gradient-to-br from-amber-50 to-orange-50'} border ${borderColor} shadow-sm hover:shadow-md transition-all`}>
+                                                    <div className={`${secondaryText} text-xs font-medium mb-1`}>Avg Progress</div>
+                                                    <div className={`font-bold text-lg ${textColor}`}>
                                                         {hasProgress ? (
                                                             `${Math.round(
                                                                 userKpiData.reduce((sum, subject) => sum + subject.completed, 0) / 
@@ -647,8 +677,14 @@ export default function AdminKraKpiPage() {
                                                 </div>
                                             </div>
 
-                                            {expandedUser === user.id && (
-                                                <div className="mt-4 pt-4 border-t ${borderColor}">
+                                            <AnimatePresence>
+                                                {expandedUser === user.id && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        exit={{ opacity: 0, height: 0 }}
+                                                        transition={{ duration: 0.3 }}
+                                                        className={`mt-4 pt-4 border-t-2 ${borderColor}`}>
                                                     {activeTab === 'kpi' ? (
                                                         <div className="space-y-6">
                                                             <div>
@@ -965,9 +1001,10 @@ export default function AdminKraKpiPage() {
                                                             )}
                                                         </div>
                                                     )}
-                                                </div>
-                                            )}
-                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </motion.div>
                                     );
                                 })}
 

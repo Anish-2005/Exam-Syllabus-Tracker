@@ -147,7 +147,7 @@ export default function UserDataPage() {
                         const progress = calculateProgress(value, subjectId);
 
                         return (
-                            <div key={key} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                            <div key={key} className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
                                         <h5 className="font-semibold text-gray-900 dark:text-white">
@@ -168,7 +168,7 @@ export default function UserDataPage() {
                                 </div>
 
                                 <div className="mb-4">
-                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
                                         <div
                                             className={`h-3 rounded-full transition-all duration-300 ${progress.percentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
                                             style={{ width: `${progress.percentage}%` }}
@@ -185,15 +185,15 @@ export default function UserDataPage() {
                                                 key={index}
                                                 className={`p-3 rounded-md border transition-colors ${
                                                     isCompleted
-                                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
-                                                        : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+                                                        ? 'bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                                                        : 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
                                                 }`}
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <span className={`text-sm font-medium ${
                                                         isCompleted
                                                             ? 'text-green-800 dark:text-green-300'
-                                                            : 'text-gray-700 dark:text-gray-300'
+                                                            : 'text-gray-900 dark:text-gray-300'
                                                     }`}>
                                                         Module {index + 1}: {module.name}
                                                     </span>
