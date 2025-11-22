@@ -127,82 +127,91 @@ export default function UserDataPage() {
 
     const renderProgressData = (userId) => {
         const progress = userProgress[userId];
-        if (!progress) return <div className={`text-sm ${secondaryText} italic`}>No progress data</div>;
+        if (!progress) return <div className="text-sm text-gray-500 dark:text-gray-400 italic">No progress data available</div>;
 
         return (
-            <div className={`mt-2 p-3 rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                <h4 className={`font-medium ${textColor} flex items-center mb-2`}>
-                    <BookOpen className="w-4 h-4 mr-2" /> Learning Progress
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
+                <h4 className="font-semibold text-gray-900 dark:text-white flex items-center mb-4">
+                    <BookOpen className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
+                    Learning Progress
                 </h4>
 
-                {Object.entries(progress).map(([key, value]) => {
-                    if (key === 'updatedAt') return null;
+                <div className="space-y-6">
+                    {Object.entries(progress).map(([key, value]) => {
+                        if (key === 'updatedAt') return null;
 
-                    const subjectId = key.replace('subject_', '');
-                    const subjectInfo = syllabusData[subjectId];
-                    if (!subjectInfo) return null;
+                        const subjectId = key.replace('subject_', '');
+                        const subjectInfo = syllabusData[subjectId];
+                        if (!subjectInfo) return null;
 
-                    const progress = calculateProgress(value, subjectId);
+                        const progress = calculateProgress(value, subjectId);
 
-                    return (
-                        <div key={key} className="mb-4">
-                            <div className={`font-medium ${textColor} flex items-center justify-between`}>
-                                <span>
-                                    {subjectInfo.name}
-                                    <span className={`text-sm ml-2 ${secondaryText}`}>
-                                        ({subjectInfo.code})
-                                    </span>
-                                </span>
-                                <span className={`text-sm ${progress.percentage === 100 ? 'text-green-500' : 'text-indigo-500'}`}>
-                                    {progress.percentage}%
-                                </span>
-                            </div>
-                            <div className={`text-xs ${secondaryText} mb-2`}>
-                                {subjectInfo.branch} • Year {subjectInfo.year} • Sem {subjectInfo.semester}
-                            </div>
-
-                            <div className="mb-2">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className={`text-xs ${secondaryText}`}>
-                                        {progress.completedCount} of {progress.totalModules} modules
-                                    </span>
-                                </div>
-                                <div className={`w-full ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2.5`}>
-                                    <div
-                                        className={`h-2.5 rounded-full ${progress.percentage === 100 ? 'bg-green-500' : 'bg-indigo-500'}`}
-                                        style={{ width: `${progress.percentage}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                            {subjectInfo.modules?.map((module, index) => {
-                                const isCompleted = value[`module_${index}`] === true;
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className={`p-2 rounded border mb-2 ${isCompleted
-                                                ? (theme === 'dark' ? 'bg-green-900/30 border-green-700' : 'bg-green-100 border-green-200')
-                                                : (theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
-                                            }`}
-                                    >
-                                        <div className="flex items-center">
-                                            <span className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : secondaryText}`}>
-                                                Module {index + 1}: {module.name}
-                                            </span>
-                                            {isCompleted && (
-                                                <CheckCircle className="w-4 h-4 ml-2 text-green-500" />
-                                            )}
+                        return (
+                            <div key={key} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <h5 className="font-semibold text-gray-900 dark:text-white">
+                                            {subjectInfo.name}
+                                        </h5>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            {subjectInfo.code} • {subjectInfo.branch} • Year {subjectInfo.year} • Sem {subjectInfo.semester}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className={`text-2xl font-bold ${progress.percentage === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                            {progress.percentage}%
+                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                                            {progress.completedCount} of {progress.totalModules} modules
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    );
-                })}
+                                </div>
+
+                                <div className="mb-4">
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                                        <div
+                                            className={`h-3 rounded-full transition-all duration-300 ${progress.percentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                                            style={{ width: `${progress.percentage}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {subjectInfo.modules?.map((module, index) => {
+                                        const isCompleted = value[`module_${index}`] === true;
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className={`p-3 rounded-md border transition-colors ${
+                                                    isCompleted
+                                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                                                        : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-sm font-medium ${
+                                                        isCompleted
+                                                            ? 'text-green-800 dark:text-green-300'
+                                                            : 'text-gray-700 dark:text-gray-300'
+                                                    }`}>
+                                                        Module {index + 1}: {module.name}
+                                                    </span>
+                                                    {isCompleted && (
+                                                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
 
                 {progress.updatedAt && (
-                    <div className={`text-xs ${secondaryText} mt-2`}>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                         Last updated: {formatDate(progress.updatedAt.toDate())}
                     </div>
                 )}
@@ -239,95 +248,75 @@ export default function UserDataPage() {
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200 pb-8`}>
                 {/* Navigation */}
-                 <nav className={`${cardBg} shadow-lg ${borderColor} border-b sticky top-0 z-50`}>
+                <nav className={`bg-white dark:bg-gray-900 shadow-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16 md:h-20">
+                        <div className="flex justify-between items-center h-16">
                             {/* Left Section */}
-                            <div className="flex items-center space-x-3 min-w-0">
+                            <div className="flex items-center space-x-4 min-w-0">
                                 <Link
                                     href="/dashboard"
-                                    className="p-2 rounded-full transition-colors"
+                                    className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                     aria-label="Back to Dashboard"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                    </svg>
+                                    <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                                 </Link>
                                 <Image
                                     src="/emblem.png"
                                     alt="NeuraMark Logo"
-                                    width={36}
-                                    height={36}
-                                    className="rounded-sm shadow-sm shrink-0"
+                                    width={32}
+                                    height={32}
+                                    className="rounded shrink-0"
                                     priority
                                 />
-                                <h1 className={`text-lg sm:text-2xl font-bold ${textColor} tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
+                                <h1 className={`text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[140px] sm:max-w-xs`}>
                                     Active Users
                                 </h1>
+                                <span className="hidden sm:inline-block ml-2 px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded">
+                                    ADMIN
+                                </span>
                             </div>
 
                             {/* Desktop Controls */}
                             <div className="hidden md:flex items-center space-x-4">
                                 <button
                                     onClick={fetchAllData}
-                                    className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md hover:from-indigo-700 hover:to-blue-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+                                    className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 text-sm transition-colors"
                                     disabled={loading}
                                 >
-                                    <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+                                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                                     <span>Refresh</span>
                                 </button>
 
-                                {user?.photoURL ? (
-                                    <Image
-                                        src={user.photoURL}
-                                        alt={user.displayName || 'User'}
-                                        width={28}
-                                        height={28}
-                                        className="rounded-full"
-                                    />
-                                ) : (
-                                    <div className="h-7 w-7 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                        <User size={16} />
-                                    </div>
-                                )}
+                                <div className="flex items-center space-x-3 ml-4 pl-3 border-l border-gray-300 dark:border-gray-600">
+                                    {user?.photoURL ? (
+                                        <Image
+                                            src={user.photoURL}
+                                            alt={user.displayName || 'User'}
+                                            width={32}
+                                            height={32}
+                                            className="rounded-full"
+                                        />
+                                    ) : (
+                                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                                            {(user?.displayName || user?.email)?.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
 
-                                <span className={`hidden sm:inline-block ${secondaryText} text-sm md:text-base truncate max-w-[200px]`}>
-                                    {user?.displayName || user?.email}
-                                </span>
+                                    <span className={`hidden sm:inline-block text-sm font-medium truncate max-w-[200px] text-gray-700 dark:text-gray-200`}>
+                                        {user?.displayName || user?.email?.split("@")[0]}
+                                    </span>
+                                </div>
 
                                 <button
                                     onClick={toggleTheme}
-                                    className={`p-2 rounded-full transition-all duration-300
-                        ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                        shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                        ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                                    className={`p-2 rounded-md ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
                                     aria-label="Toggle Theme"
                                 >
-                                    <AnimatePresence mode="wait" initial={false}>
-                                        {isDark ? (
-                                            <motion.div
-                                                key="sun"
-                                                initial={{ rotate: -90, opacity: 0 }}
-                                                animate={{ rotate: 0, opacity: 1 }}
-                                                exit={{ rotate: 90, opacity: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="text-yellow-400"
-                                            >
-                                                <Sun className="w-5 h-5 md:w-6 md:h-6" />
-                                            </motion.div>
-                                        ) : (
-                                            <motion.div
-                                                key="moon"
-                                                initial={{ rotate: 90, opacity: 0 }}
-                                                animate={{ rotate: 0, opacity: 1 }}
-                                                exit={{ rotate: -90, opacity: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="text-indigo-600"
-                                            >
-                                                <Moon className="w-5 h-5 md:w-6 md:h-6" />
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                                    {isDark ? (
+                                        <Sun className="w-5 h-5 text-amber-400" />
+                                    ) : (
+                                        <Moon className="w-5 h-5 text-indigo-600" />
+                                    )}
                                 </button>
                             </div>
 
@@ -335,10 +324,10 @@ export default function UserDataPage() {
                             <div className="md:hidden">
                                 <button
                                     onClick={() => setSidebarOpen(true)}
+                                    className={`p-2 rounded-md ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
                                     aria-label="Open Menu"
-                                    className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
-                                    <Menu className="w-6 h-6" />
+                                    <Menu className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                                 </button>
                             </div>
                         </div>
@@ -491,87 +480,167 @@ export default function UserDataPage() {
 
 
                 {/* Main Content */}
-                <main className={`max-w-8xl mx-auto px-2 sm:px-6 lg:px-8 ${textColor}`}>
-                    <div className={`${cardBg} p-4 sm:p-6 rounded-lg shadow ${borderColor} border mt-4`}>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                            <h2 className={`text-xl font-bold ${textColor} mb-4 sm:mb-0`}>
-                                {filteredUsers.length} {filteredUsers.length === 1 ? 'User' : 'Users'}
-                            </h2>
-                            <div className="w-full sm:w-64">
-                                <input
-                                    type="text"
-                                    placeholder="Search users..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className={`w-full px-3 py-2 border rounded-md text-sm ${borderColor} ${inputBg}`}
-                                />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                    <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Users</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Learners</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {Object.keys(userProgress).filter(id => userProgress[id] && Object.keys(userProgress[id]).length > 0).length}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                    <BookOpen className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Subjects Available</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{Object.keys(syllabusData).length}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                                    <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">New This Week</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {users.filter(user => {
+                                            const weekAgo = new Date();
+                                            weekAgo.setDate(weekAgo.getDate() - 7);
+                                            return user.createdAt && user.createdAt > weekAgo;
+                                        }).length}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Users Table/Card Container */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                        User Management
+                                    </h2>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Monitor user activity and learning progress
+                                    </p>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Search users..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full sm:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                        {searchQuery && (
+                                            <button
+                                                onClick={() => setSearchQuery('')}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={fetchAllData}
+                                        className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+                                        disabled={loading}
+                                    >
+                                        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                                        <span className="hidden sm:inline">Refresh</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {loading ? (
-                            <div className="flex justify-center items-center h-40">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                            <div className="flex flex-col items-center justify-center py-16">
+                                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+                                <p className="text-gray-600 dark:text-gray-400">Loading user data...</p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 {/* Mobile Cards */}
-                                <div className="sm:hidden space-y-3">
+                                <div className="sm:hidden space-y-4 p-6">
                                     {filteredUsers.map((user) => (
                                         <div
                                             key={user.id}
-                                            className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${borderColor}`}
+                                            className="bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 p-4"
                                         >
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center space-x-3">
                                                     {user.photoURL ? (
                                                         <Image
                                                             src={user.photoURL}
                                                             alt={user.name}
-                                                            width={40}
-                                                            height={40}
-                                                            className="rounded-full"
+                                                            width={48}
+                                                            height={48}
+                                                            className="rounded-full ring-2 ring-gray-200 dark:ring-gray-600"
                                                         />
                                                     ) : (
-                                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300`}>
-                                                            <User size={18} />
+                                                        <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-lg font-semibold">
+                                                            {user.name.charAt(0).toUpperCase()}
                                                         </div>
                                                     )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className={`font-medium ${textColor} truncate`}>{user.name}</div>
-                                                        <div className={`text-xs ${secondaryText} truncate`}>{user.email}</div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white">{user.name}</h3>
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => toggleUserExpand(user.id)}
-                                                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                    className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                                 >
                                                     {expandedUser === user.id ? (
-                                                        <ChevronUp className="w-5 h-5" />
+                                                        <ChevronUp className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                                                     ) : (
-                                                        <ChevronDown className="w-5 h-5" />
+                                                        <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                                                     )}
                                                 </button>
                                             </div>
 
-                                            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                                            <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                                                 <div>
-                                                    <div className={`${secondaryText}`}>Created</div>
-                                                    <div>{formatDate(user.createdAt)}</div>
+                                                    <p className="text-gray-500 dark:text-gray-400">Joined</p>
+                                                    <p className="font-medium text-gray-900 dark:text-white">{formatDate(user.createdAt)}</p>
                                                 </div>
                                                 <div>
-                                                    <div className={`${secondaryText}`}>Updated</div>
-                                                    <div>{formatDate(user.updatedAt)}</div>
-                                                </div>
-                                                <div>
-                                                    <div className={`${secondaryText}`}>Progress</div>
-                                                    <div className={userProgress[user.id] ? 'text-green-500' : secondaryText}>
-                                                        {userProgress[user.id] ? 'Has progress' : 'No data'}
-                                                    </div>
+                                                    <p className="text-gray-500 dark:text-gray-400">Last Active</p>
+                                                    <p className="font-medium text-gray-900 dark:text-white">{formatDate(user.updatedAt)}</p>
                                                 </div>
                                             </div>
 
                                             {expandedUser === user.id && (
-                                                <div className="mt-4 pt-4 border-t ${borderColor}">
+                                                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                                                     {renderProgressData(user.id)}
                                                 </div>
                                             )}
@@ -580,132 +649,143 @@ export default function UserDataPage() {
                                 </div>
 
                                 {/* Desktop Table */}
-                                <table className="hidden sm:table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                    <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                        <tr>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                                <div className="flex items-center">
-                                                    <User className="w-4 h-4 mr-1" />
-                                                    <span className={secondaryText}>User</span>
-                                                </div>
-                                            </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                                <div className="flex items-center">
-                                                    <Mail className="w-4 h-4 mr-1" />
-                                                    <span className={secondaryText}>Email</span>
-                                                </div>
-                                            </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                                <div className="flex items-center">
-                                                    <Calendar className="w-4 h-4 mr-1" />
-                                                    <span className={secondaryText}>Created</span>
-                                                </div>
-                                            </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                                <div className="flex items-center">
-                                                    <Clock className="w-4 h-4 mr-1" />
-                                                    <span className={secondaryText}>Updated</span>
-                                                </div>
-                                            </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                                <div className="flex items-center">
-                                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                                    <span className={secondaryText}>Progress</span>
-                                                </div>
-                                            </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                                <span className={secondaryText}>Details</span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                                        {filteredUsers.map((user) => (
-                                            <>
-                                                <tr key={user.id} className={`hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center">
-                                                            <div className="flex-shrink-0 h-10 w-10">
-                                                                {user.photoURL ? (
-                                                                    <Image
-                                                                        src={user.photoURL}
-                                                                        alt={user.name}
-                                                                        width={40}
-                                                                        height={40}
-                                                                        className="rounded-full"
-                                                                    />
-                                                                ) : (
-                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300`}>
-                                                                        <User size={18} />
+                                <div className="hidden sm:block">
+                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead className="bg-gray-50 dark:bg-gray-700">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    <div className="flex items-center">
+                                                        <User className="w-4 h-4 mr-2" />
+                                                        User
+                                                    </div>
+                                                </th>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    <div className="flex items-center">
+                                                        <Mail className="w-4 h-4 mr-2" />
+                                                        Email
+                                                    </div>
+                                                </th>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    <div className="flex items-center">
+                                                        <Calendar className="w-4 h-4 mr-2" />
+                                                        Joined
+                                                    </div>
+                                                </th>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    <div className="flex items-center">
+                                                        <Clock className="w-4 h-4 mr-2" />
+                                                        Last Active
+                                                    </div>
+                                                </th>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    <div className="flex items-center">
+                                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                                        Progress
+                                                    </div>
+                                                </th>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    Details
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                            {filteredUsers.map((user) => (
+                                                <>
+                                                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center">
+                                                                <div className="flex-shrink-0 h-10 w-10">
+                                                                    {user.photoURL ? (
+                                                                        <Image
+                                                                            src={user.photoURL}
+                                                                            alt={user.name}
+                                                                            width={40}
+                                                                            height={40}
+                                                                            className="rounded-full ring-2 ring-gray-200 dark:ring-gray-600"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold">
+                                                                            {user.name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="ml-4">
+                                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                        {user.name}
                                                                     </div>
+                                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                        ID: {user.id.slice(0, 8)}...
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900 dark:text-white">{user.email}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900 dark:text-white">{formatDate(user.createdAt)}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900 dark:text-white">{formatDate(user.updatedAt)}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                                userProgress[user.id] && Object.keys(userProgress[user.id]).length > 0
+                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                            }`}>
+                                                                {userProgress[user.id] && Object.keys(userProgress[user.id]).length > 0 ? 'Active' : 'No Progress'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                            <button
+                                                                onClick={() => toggleUserExpand(user.id)}
+                                                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                            >
+                                                                {expandedUser === user.id ? (
+                                                                    <ChevronUp className="w-5 h-5" />
+                                                                ) : (
+                                                                    <ChevronDown className="w-5 h-5" />
                                                                 )}
-                                                            </div>
-                                                            <div className="ml-3">
-                                                                <div className={`text-sm font-medium ${textColor}`}>
-                                                                    {user.name}
-                                                                </div>
-                                                                <div className={`text-xs ${secondaryText}`}>
-                                                                    ID: {user.id}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <div className={`text-sm ${secondaryText}`}>
-                                                            {user.email}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <div className={`text-sm ${secondaryText}`}>
-                                                            {formatDate(user.createdAt)}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <div className={`text-sm ${secondaryText}`}>
-                                                            {formatDate(user.updatedAt)}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <div className={`text-sm ${userProgress[user.id] ? 'text-green-500' : secondaryText}`}>
-                                                            {userProgress[user.id] ? 'Has progress' : 'No data'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <button
-                                                            onClick={() => toggleUserExpand(user.id)}
-                                                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                                        >
-                                                            {expandedUser === user.id ? (
-                                                                <ChevronUp className="w-5 h-5" />
-                                                            ) : (
-                                                                <ChevronDown className="w-5 h-5" />
-                                                            )}
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                {expandedUser === user.id && (
-                                                    <tr>
-                                                        <td colSpan="6" className="px-4 py-4">
-                                                            {renderProgressData(user.id)}
+                                                            </button>
                                                         </td>
                                                     </tr>
-                                                )}
-                                            </>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                                    {expandedUser === user.id && (
+                                                        <tr>
+                                                            <td colSpan="6" className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
+                                                                {renderProgressData(user.id)}
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
                         {!loading && filteredUsers.length === 0 && (
-                            <div className={`text-center py-8 ${secondaryText}`}>
-                                <User size={48} className="mx-auto mb-4 opacity-50" />
-                                <p>{searchQuery ? 'No matching users found' : 'No user data available'}</p>
+                            <div className="text-center py-16">
+                                <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                    <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                    {searchQuery ? 'No matching users found' : 'No users registered yet'}
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                                    {searchQuery
+                                        ? 'Try adjusting your search terms or clear the search to see all users.'
+                                        : 'Users will appear here once they register and start using the platform.'
+                                    }
+                                </p>
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery('')}
-                                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
                                     >
-                                        Clear search
+                                        <X className="w-4 h-4 mr-2" />
+                                        Clear Search
                                     </button>
                                 )}
                             </div>
