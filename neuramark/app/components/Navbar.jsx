@@ -15,75 +15,82 @@ export default function Navbar({ user, logout, toggleTheme, isDark, page = "Dash
 
     return (
         <>
-            <nav className={`bg-white dark:bg-gray-900 shadow-2xl border-b-2 dark:border-gray-700 border-purple-100 dark:border-purple-900/30 sticky top-0 z-50 backdrop-blur-xl bg-opacity-90 dark:bg-opacity-90`}>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16 md:h-20">
+            <nav className={`bg-white/80 dark:bg-gray-900/80 shadow-2xl border-b-2 border-purple-200/50 dark:border-purple-900/30 sticky top-0 z-50 backdrop-blur-2xl`}>
+                <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+                    <div className="flex justify-between items-center h-20">
                         {/* Left Section */}
-                        <div className="flex items-center space-x-3 min-w-0">
+                        <div className="flex items-center space-x-4 min-w-0">
                             <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 rounded-xl blur-lg opacity-30 group-hover:opacity-60 transition duration-300"></div>
                                 <Image
                                     src="/emblem.png"
                                     alt="NeuraMark Logo"
-                                    width={40}
-                                    height={40}
-                                    className="rounded-lg shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-110"
+                                    width={48}
+                                    height={48}
+                                    className="relative rounded-xl shadow-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                                     priority
                                 />
-                                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             </div>
-                            <h1 className={`text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
+                            <h1 className={`text-xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 dark:from-purple-400 dark:via-pink-400 dark:to-indigo-400 tracking-tight truncate max-w-[140px] sm:max-w-xs`}>
                                 {page}
                             </h1>
                             {isAdmin && (
-                                <span className="ml-1 px-2 py-0.5 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs rounded-full shadow-sm">
+                                <motion.span 
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="ml-2 px-3 py-1 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse"
+                                >
                                     ADMIN
-                                </span>
+                                </motion.span>
                             )}
                         </div>
 
                         {/* Desktop Controls */}
-                        <div className="hidden md:flex items-center space-x-3">
+                        <div className="hidden md:flex items-center space-x-4">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    className="text-sm text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white px-3 py-2 rounded-md"
+                                    className="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 dark:hover:from-purple-400 dark:hover:to-pink-400 px-4 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-gray-800 transition-all duration-200"
                                 >
                                     {item.name}
                                 </Link>
                             ))}
 
                             {user?.photoURL ? (
-                                <Image
-                                    src={user.photoURL}
-                                    alt={user.displayName || 'User'}
-                                    width={28}
-                                    height={28}
-                                    className="rounded-full"
-                                />
+                                <div className="relative group">
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
+                                    <Image
+                                        src={user.photoURL}
+                                        alt={user.displayName || 'User'}
+                                        width={36}
+                                        height={36}
+                                        className="relative rounded-full ring-2 ring-white dark:ring-gray-800"
+                                    />
+                                </div>
                             ) : (
-                                <div className="h-7 w-7 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                    <User size={16} />
+                                <div className="h-9 w-9 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg">
+                                    <User size={20} />
                                 </div>
                             )}
 
-                            <span className="hidden sm:inline-block text-sm md:text-base truncate max-w-[200px] text-gray-600 dark:text-gray-300">
+                            <span className="hidden sm:inline-block text-sm md:text-base font-semibold truncate max-w-[200px] text-gray-700 dark:text-gray-200">
                                 {user?.displayName || user?.email}
                             </span>
 
                             <button
                                 onClick={logout}
-                                className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-md hover:from-red-700 hover:to-rose-600 text-sm shadow-md transition-all transform hover:scale-105 active:scale-95"
+                                className="px-5 py-2 bg-gradient-to-r from-red-600 to-rose-500 text-white font-bold rounded-xl hover:from-red-700 hover:to-rose-600 text-sm shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
                             >
                                 Logout
                             </button>
 
                             <button
                                 onClick={toggleTheme}
-                                className={`p-2 rounded-full transition-all duration-300
-                                    ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}
-                                    shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2
-                                    ${isDark ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
+                                className={`p-3 rounded-xl transition-all duration-300
+                                    ${isDark ? 'bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700' : 'bg-gradient-to-br from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200'}
+                                    shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2
+                                    ${isDark ? 'focus:ring-purple-500' : 'focus:ring-purple-400'} transform hover:scale-110 active:scale-95`}
                                 aria-label="Toggle Theme"
                             >
                                 <AnimatePresence mode="wait" initial={false}>
