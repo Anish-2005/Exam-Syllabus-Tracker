@@ -94,11 +94,11 @@ export default function ChatPage() {
     const [currentRoomMembers, setCurrentRoomMembers] = useState([])
 
     // Enhanced color scheme
-    const bgColor = isDark ? "bg-gray-900" : "bg-gray-50"
-    const cardBg = isDark ? "bg-gray-800" : "bg-white"
+    const bgColor = isDark ? "bg-gray-900" : "bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100"
+    const cardBg = isDark ? "bg-gray-800" : "bg-white/70 backdrop-blur-lg"
     const textColor = isDark ? "text-gray-100" : "text-gray-900"
-    const secondaryText = isDark ? "text-gray-400" : "text-gray-500"
-    const borderColor = isDark ? "border-gray-700" : "border-gray-200"
+    const secondaryText = isDark ? "text-gray-400" : "text-gray-700"
+    const borderColor = isDark ? "border-gray-700" : "border-purple-200"
     const inputBg = isDark ? "bg-gray-700 text-white" : "bg-gray-50 text-gray-900"
     const hoverBg = isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
     const activeBg = isDark ? "active:bg-gray-600" : "active:bg-gray-200"
@@ -586,7 +586,13 @@ export default function ChatPage() {
                     </div>
                 }
             >
-                <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
+                <div className={`min-h-screen ${bgColor} transition-colors duration-200 relative overflow-hidden`}>
+                    {/* Animated background blobs */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob"></div>
+                        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob animation-delay-2000"></div>
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob animation-delay-4000"></div>
+                    </div>
                     <NavigationBar
                         isDark={isDark}
                         textColor={textColor}
@@ -626,8 +632,8 @@ export default function ChatPage() {
                     />
 
                     {/* Main Content */}
-                    <main className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-[calc(100vh-80px)]">
+                    <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="flex h-[calc(100vh-96px)] gap-4">
                             <RoomList
                                 isDark={isDark}
                                 textColor={textColor}
