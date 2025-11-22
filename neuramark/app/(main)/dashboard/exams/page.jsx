@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useTheme } from '../../../context/ThemeContext';
-import { User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Calendar, Clock, BookOpen, GraduationCap } from 'lucide-react'
+import { User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Calendar, Clock, BookOpen, GraduationCap, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
@@ -241,6 +241,217 @@ export default function ExamsPage() {
         if (diffDays > 1) return `${diffDays} days remaining`;
         if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
         return '';
+    };
+
+    const exportToPDF = () => {
+        // Create HTML content for PDF
+        const content = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>My Exam Schedule</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        margin: 40px;
+                        color: #333;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 3px solid #6366f1;
+                        padding-bottom: 20px;
+                    }
+                    .header h1 {
+                        color: #6366f1;
+                        margin: 0;
+                        font-size: 32px;
+                    }
+                    .header p {
+                        color: #666;
+                        margin: 5px 0 0 0;
+                    }
+                    .exam-card {
+                        border: 2px solid #e5e7eb;
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        background: linear-gradient(to right, #f9fafb, #ffffff);
+                        page-break-inside: avoid;
+                    }
+                    .exam-card.past {
+                        opacity: 0.7;
+                        background: linear-gradient(to right, #f3f4f6, #f9fafb);
+                    }
+                    .exam-title {
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: #1f2937;
+                        margin-bottom: 10px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    .exam-subject {
+                        color: #6366f1;
+                        font-size: 14px;
+                        margin-bottom: 15px;
+                    }
+                    .exam-details {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 15px;
+                        margin-top: 15px;
+                    }
+                    .detail-item {
+                        background: white;
+                        padding: 12px;
+                        border-radius: 8px;
+                        border: 1px solid #e5e7eb;
+                    }
+                    .detail-label {
+                        font-size: 12px;
+                        color: #6b7280;
+                        font-weight: 600;
+                        margin-bottom: 4px;
+                        text-transform: uppercase;
+                    }
+                    .detail-value {
+                        font-size: 14px;
+                        color: #1f2937;
+                        font-weight: 500;
+                    }
+                    .days-remaining {
+                        display: inline-block;
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        margin-top: 8px;
+                    }
+                    .days-remaining.today {
+                        background: #fee2e2;
+                        color: #dc2626;
+                    }
+                    .days-remaining.tomorrow {
+                        background: #fed7aa;
+                        color: #ea580c;
+                    }
+                    .days-remaining.upcoming {
+                        background: #dbeafe;
+                        color: #2563eb;
+                    }
+                    .days-remaining.past {
+                        background: #f3f4f6;
+                        color: #6b7280;
+                    }
+                    .notes {
+                        margin-top: 15px;
+                        padding: 12px;
+                        background: #fffbeb;
+                        border-left: 4px solid #f59e0b;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        color: #78350f;
+                    }
+                    .footer {
+                        margin-top: 40px;
+                        text-align: center;
+                        color: #9ca3af;
+                        font-size: 12px;
+                        border-top: 1px solid #e5e7eb;
+                        padding-top: 20px;
+                    }
+                    @media print {
+                        body { margin: 20px; }
+                        .exam-card { page-break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>My Exam Schedule</h1>
+                    <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p><strong>${user?.displayName || user?.email}</strong></p>
+                </div>
+                ${filteredExams.length === 0 ? '<p style="text-align: center; color: #9ca3af; font-size: 18px;">No exams to display</p>' : ''}
+                ${filteredExams.map(exam => {
+                    const isPast = new Date(`${exam.date}T${exam.time || '00:00'}`) < new Date();
+                    const daysText = getDaysRemaining(exam.date);
+                    const daysClass = daysText === 'Today' ? 'today' : daysText === 'Tomorrow' ? 'tomorrow' : isPast ? 'past' : 'upcoming';
+                    
+                    return `
+                        <div class="exam-card ${isPast ? 'past' : ''}">
+                            <div class="exam-title">
+                                ${exam.name}
+                            </div>
+                            ${exam.subject ? `<div class="exam-subject">Subject: ${exam.subject}</div>` : ''}
+                            <span class="days-remaining ${daysClass}">${daysText}</span>
+                            <div class="exam-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Date</div>
+                                    <div class="detail-value">${formatDate(exam.date)}</div>
+                                </div>
+                                ${exam.time ? `
+                                <div class="detail-item">
+                                    <div class="detail-label">Time</div>
+                                    <div class="detail-value">${formatTime(exam.time)}</div>
+                                </div>
+                                ` : ''}
+                                ${exam.location ? `
+                                <div class="detail-item">
+                                    <div class="detail-label">Location</div>
+                                    <div class="detail-value">${exam.location}</div>
+                                </div>
+                                ` : ''}
+                                ${exam.semester ? `
+                                <div class="detail-item">
+                                    <div class="detail-label">Semester</div>
+                                    <div class="detail-value">Semester ${exam.semester}</div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            ${exam.notes ? `
+                            <div class="notes">
+                                <strong>Notes:</strong><br/>
+                                ${exam.notes}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('')}
+                <div class="footer">
+                    <p>Exam Schedule PDF - NeuraMark</p>
+                    <p>Total Exams: ${filteredExams.length}</p>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Create a blob and download
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `exam-schedule-${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // Open print dialog
+        setTimeout(() => {
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(content);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
+            }
+        }, 100);
     };
 
     return (
@@ -483,7 +694,7 @@ export default function ExamsPage() {
                                         <h2 className={`text-xl font-bold ${textColor}`}>My Exam Schedule</h2>
                                     </div>
 
-                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
                                         <select
                                             value={filter}
                                             onChange={(e) => setFilter(e.target.value)}
@@ -493,6 +704,16 @@ export default function ExamsPage() {
                                             <option value="past">Past</option>
                                             <option value="all">All Exams</option>
                                         </select>
+
+                                        <button
+                                            onClick={exportToPDF}
+                                            disabled={filteredExams.length === 0}
+                                            className="px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                            title="Export to PDF"
+                                        >
+                                            <Download size={18} />
+                                            <span className="hidden sm:inline">Export PDF</span>
+                                        </button>
 
                                         <button
                                             onClick={() => setShowAddExam(true)}
