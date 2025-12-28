@@ -10,17 +10,32 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  User
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
-export const AuthContext = createContext();
+interface AuthContextType {
+  user: User | null;
+  userProfile: any;
+  loading: boolean;
+  needsProfile: boolean;
+  signup: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  googleSignIn: () => Promise<void>;
+  completeProfile: (name: string) => Promise<any>;
+  updateUserProfile: (profileData: any) => Promise<any>;
+}
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [needsProfile, setNeedsProfile] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [needsProfile, setNeedsProfile] = useState<boolean>(false);
 
   // Check if user profile exists in Firestore
   const checkUserProfile = async (uid) => {
@@ -173,7 +188,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');

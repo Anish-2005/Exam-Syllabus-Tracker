@@ -24,7 +24,7 @@ export default function SignupPage() {
   const { signup, googleSignIn, needsProfile, user, userProfile } = useAuth();
 
   // Check if user exists in Firestore by email
-  const checkUserExists = async (email) => {
+  const checkUserExists = async (email: string) => {
     const usersRef = doc(db, 'users', email); // Assuming email is the document ID
     const userDoc = await getDoc(usersRef);
     return userDoc.exists();
@@ -38,7 +38,7 @@ export default function SignupPage() {
     }
   }, [user, needsProfile, userProfile, router]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -58,7 +58,7 @@ export default function SignupPage() {
 
       // If user doesn't exist, proceed with signup
       await signup(email, password);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function SignupPage() {
       setError('');
       setLoading(true);
       await googleSignIn();
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       setLoading(false);
     }

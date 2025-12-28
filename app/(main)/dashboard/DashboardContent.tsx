@@ -8,6 +8,18 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, g
 import { db } from '../../lib/firebase';
 import { useTheme } from '../../context/ThemeContext';
 import { Upload,MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen, Zap, FileText, Download } from 'lucide-react'
+
+interface Subject {
+  name: string;
+  code: string;
+  modules: Module[];
+  semester?: string;
+}
+
+interface Module {
+  name: string;
+  topics: string[];
+}
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
@@ -17,12 +29,12 @@ import Navbar from '@/app/components/Navbar';
 export default function Dashboard() {
     const { user, logout } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [syllabusData, setSyllabusData] = useState([]);
+    const [syllabusData, setSyllabusData] = useState<any[]>([]);
     const [selectedBranch, setSelectedBranch] = useState('');
     const [selectedYear, setSelectedYear] = useState(1);
     const [selectedSemester, setSelectedSemester] = useState(null);
     const [selectedSubject, setSelectedSubject] = useState(null);
-    const [modules, setModules] = useState([]);
+    const [modules, setModules] = useState<Module[]>([]);
     const [userProgress, setUserProgress] = useState({});
     const { theme, toggleTheme, isDark } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -39,10 +51,11 @@ export default function Dashboard() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pageTitle = "NeuraMark";
-    const [newSubject, setNewSubject] = useState({
+    const [newSubject, setNewSubject] = useState<Subject>({
         name: '',
         code: '',
-        modules: []
+        modules: [],
+        semester: ''
     });
     const [newModule, setNewModule] = useState({
         name: '',
@@ -54,8 +67,8 @@ export default function Dashboard() {
     const [newYear, setNewYear] = useState('');
     const [editingSemester, setEditingSemester] = useState(false);
     const [newSemester, setNewSemester] = useState('');
-    const [editingSubject, setEditingSubject] = useState(null);
-    const [editingModuleIndex, setEditingModuleIndex] = useState(null);
+    const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+    const [editingModuleIndex, setEditingModuleIndex] = useState<number | null>(null);
     const [isEditingModule, setIsEditingModule] = useState(false);
     const [showCopyDialog, setShowCopyDialog] = useState(false);
     const [copyFromBranch, setCopyFromBranch] = useState('');
@@ -70,7 +83,7 @@ export default function Dashboard() {
     const getAvailableSemesters = () => {
         if (!selectedYear) return [];
 
-        const yearToSemesters = {
+        const yearToSemesters: Record<number, number[]> = {
             1: [1, 2],
             2: [3, 4],
             3: [5, 6],
@@ -117,7 +130,7 @@ export default function Dashboard() {
         loadUserProgress();
     }, [user, selectedSubject]);
 
-    const editSubject = (subject) => {
+    const editSubject = (subject: Subject) => {
         setEditingSubject(subject);
         setNewSubject({
             name: subject.name,
@@ -128,7 +141,7 @@ export default function Dashboard() {
         setShowAddSubject(true);
     };
 
-    const editModule = (index) => {
+    const editModule = (index: number) => {
         setEditingModuleIndex(index);
         setIsEditingModule(true);
         setNewModule({
@@ -138,7 +151,7 @@ export default function Dashboard() {
     };
 
     const saveModuleEdit = async () => {
-        if (editingModuleIndex === null || !newModule.name.trim()) return;
+        if (editingModuleIndex === null || !newModule.name.trim() || !selectedSubject) return;
 
         const topicsArray = newModule.topics.split(',').map(t => t.trim()).filter(t => t);
         const updatedModules = [...modules];
@@ -148,12 +161,12 @@ export default function Dashboard() {
         };
 
         try {
-            await updateDoc(doc(db, 'syllabus', selectedSubject.id), {
+            await updateDoc(doc(db, 'syllabus', selectedSubject!.id), {
                 modules: updatedModules
             });
             setModules(updatedModules);
             setSyllabusData(prev => prev.map(sub =>
-                sub.id === selectedSubject.id ? { ...sub, modules: updatedModules } : sub
+                sub.id === selectedSubject!.id ? { ...sub, modules: updatedModules } : sub
             ));
             setIsEditingModule(false);
             setEditingModuleIndex(null);

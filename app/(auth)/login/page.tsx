@@ -31,7 +31,7 @@ export default function LoginPage() {
     }
   }, [user, needsProfile, userProfile, router]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     try {
@@ -39,7 +39,7 @@ export default function LoginPage() {
       setLoading(true);
       await login(email, password);
       // The useEffect will handle redirection or showing the modal
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function LoginPage() {
       setLoading(true);
       await googleSignIn();
       // The useEffect will handle redirection or showing the modal
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       setLoading(false);
     }

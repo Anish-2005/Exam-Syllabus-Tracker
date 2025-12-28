@@ -2,7 +2,15 @@
 'use client'
 import { createContext, useContext, useEffect, useState } from 'react';
 
-const ThemeContext = createContext();
+interface ThemeContextType {
+  theme: string;
+  toggleTheme: () => void;
+  isDark: boolean;
+  isLight: boolean;
+  mounted: boolean;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('light');
@@ -82,7 +90,7 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export const useTheme = () => {
+export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
