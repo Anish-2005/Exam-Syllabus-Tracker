@@ -34,7 +34,7 @@ const ADMIN_EMAILS = new Set([
 // Helper function to check if current user is admin
 const isAdmin = () => {
   const user = auth.currentUser;
-  return user && ADMIN_EMAILS.has(user.email);
+  return !!user && !!user.email && ADMIN_EMAILS.has(user.email);
 };
 
 // Timestamp utility

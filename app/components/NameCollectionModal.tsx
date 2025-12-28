@@ -4,13 +4,24 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function NameCollectionModal({ onComplete, onClose }) {
+type NameCollectionModalProps = {
+  onComplete: () => void;
+  onClose: () => void;
+};
+
+export default function NameCollectionModal({ onComplete, onClose }: NameCollectionModalProps) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { completeProfile } = useAuth();
 
-  const handleSubmit = async (e) => {
+  interface HandleSubmitEvent extends React.FormEvent<HTMLFormElement> {}
+
+  interface CompleteProfileError extends Error {
+    message: string;
+  }
+
+  const handleSubmit = async (e: HandleSubmitEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setError('Please enter your name');
@@ -23,7 +34,7 @@ export default function NameCollectionModal({ onComplete, onClose }) {
       await completeProfile(name.trim());
       onComplete();
     } catch (err) {
-      setError(err.message);
+      setError((err as CompleteProfileError).message);
     } finally {
       setLoading(false);
     }

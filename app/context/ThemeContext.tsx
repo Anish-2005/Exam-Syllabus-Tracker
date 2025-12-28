@@ -12,7 +12,13 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }) {
+import { ReactNode } from 'react';
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
 
@@ -57,10 +63,14 @@ export function ThemeProvider({ children }) {
     if (!mounted) return;
     
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => {
+    interface MediaQueryListEventWithMatches extends Event {
+      matches: boolean;
+    }
+
+    const handleChange = (e: MediaQueryListEventWithMatches) => {
       // Only change if user hasn't set an explicit preference
       if (!localStorage.getItem('theme')) {
-        setTheme(e.matches ? 'dark' : 'light');
+      setTheme(e.matches ? 'dark' : 'light');
       }
     };
     

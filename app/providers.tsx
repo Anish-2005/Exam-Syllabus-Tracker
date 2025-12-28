@@ -1,9 +1,11 @@
 // app/providers.js
 'use client'
-import { AuthProvider } from '@/context/AuthContext';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
-export function Providers({ children }) {
+import React, { ReactNode } from 'react';
+
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <ThemeProvider>

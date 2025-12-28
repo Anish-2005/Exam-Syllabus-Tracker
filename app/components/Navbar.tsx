@@ -5,7 +5,20 @@ import Image from 'next/image';
 import { User, Menu, X, Moon, Sun, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Navbar({ user, logout, toggleTheme, isDark, page = "Dashboard", isAdmin }) {
+interface NavbarProps {
+    user: {
+        displayName?: string;
+        email?: string;
+        photoURL?: string;
+    } | null;
+    logout: () => void;
+    toggleTheme: () => void;
+    isDark: boolean;
+    page?: string;
+    isAdmin?: boolean;
+}
+
+export default function Navbar({ user, logout, toggleTheme, isDark, page = "Dashboard", isAdmin }: NavbarProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navItems = [

@@ -31,31 +31,63 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }) {
+import { ReactNode } from 'react';
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [needsProfile, setNeedsProfile] = useState<boolean>(false);
 
   // Check if user profile exists in Firestore
-  const checkUserProfile = async (uid) => {
+  interface UserProfile {
+    name: string;
+    email: string;
+    photoURL?: string | null;
+    createdAt?: any;
+    updatedAt?: any;
+    [key: string]: any;
+  }
+
+  const checkUserProfile = async (uid: string): Promise<UserProfile | null> => {
     const userRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userRef);
-    return userDoc.exists() ? userDoc.data() : null;
+    return userDoc.exists() ? (userDoc.data() as UserProfile) : null;
   };
 
   // Update user profile in Firestore
-  const updateUserProfile = async (uid, profileData) => {
-    const userRef = doc(db, 'users', uid);
-    await setDoc(userRef, {
-      ...profileData,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    return await checkUserProfile(uid);
+  interface UpdateUserProfileData {
+    [key: string]: any;
+  }
+
+  const updateUserProfile = async (
+    profileData: UpdateUserProfileData
+  ): Promise<UserProfile | null> => {
+    if (!user) throw new Error('No user logged in');
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(
+      userRef,
+      {
+        ...profileData,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    const updatedProfile = await checkUserProfile(user.uid);
+    setUserProfile(updatedProfile);
+    return updatedProfile;
   };
 
   // Create new user profile in Firestore
-  const createUserProfile = async (user, name) => {
+  interface CreateUserProfileParams {
+    user: User;
+    name: string;
+  }
+
+  const createUserProfile = async (
+    user: User,
+    name: string
+  ): Promise<UserProfile | null> => {
     const userRef = doc(db, 'users', user.uid);
     await setDoc(userRef, {
       name,
@@ -73,12 +105,7 @@ export function AuthProvider({ children }) {
         // Check if user has a profile
         const profile = await checkUserProfile(firebaseUser.uid);
         
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL
-        });
+        setUser(firebaseUser);
 
         if (!profile) {
           setNeedsProfile(true);
@@ -98,24 +125,42 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Email/password functions
-  const signup = async (email, password) => {
+  interface SignupParams {
+    email: string;
+    password: string;
+  }
+
+  interface SignupReturn {
+    user: User;
+  }
+
+  const signup = async (email: string, password: string): Promise<void> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // After signup, always check if profile exists
       const profile = await checkUserProfile(userCredential.user.uid);
       setNeedsProfile(!profile);
-      return userCredential.user;
+      // No return value needed
     } catch (error) {
       throw error;
     }
   };
 
-  const login = async (email, password) => {
+  interface LoginParams {
+    email: string;
+    password: string;
+  }
+
+  interface LoginReturn {
+    user: User;
+  }
+
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const profile = await checkUserProfile(userCredential.user.uid);
       setNeedsProfile(!profile);
-      return userCredential.user;
+      // No return value to match Promise<void>
     } catch (error) {
       throw error;
     }
@@ -125,41 +170,62 @@ export function AuthProvider({ children }) {
     return signOut(auth);
   };
 
-  const resetPassword = (email) => {
+  interface ResetPasswordParams {
+    email: string;
+  }
+
+  interface ResetPasswordReturn {
+    // sendPasswordResetEmail returns Promise<void>
+  }
+
+  const resetPassword = (email: string): Promise<void> => {
     return sendPasswordResetEmail(auth, email);
   };
 
   // Google Sign-In function
-  const googleSignIn = async () => {
+  const googleSignIn = async (): Promise<void> => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const profile = await checkUserProfile(result.user.uid);
       setNeedsProfile(!profile);
-      return result.user;
+      // Do not return result.user to match the expected return type
     } catch (error) {
       throw error;
     }
   };
 
   // Complete profile setup
-  const completeProfile = async (name) => {
+  interface CompleteProfileParams {
+    name: string;
+  }
+
+  interface CompleteProfileReturn {
+    name: string;
+    email: string;
+    photoURL?: string | null;
+    createdAt?: any;
+    updatedAt?: any;
+    [key: string]: any;
+  }
+
+  const completeProfile = async (name: string): Promise<CompleteProfileReturn | null> => {
     if (!user) throw new Error('No user logged in');
     
     try {
       // Update auth profile
-      await updateProfile(auth.currentUser, {
+      await updateProfile(auth.currentUser as User, {
         displayName: name
       });
       
       // Create/update Firestore profile
-      const profile = await createUserProfile(auth.currentUser, name);
+      const profile = await createUserProfile(auth.currentUser as User, name);
       
       // Update state
-      setUser(prev => ({
+      setUser(prev => prev ? ({
         ...prev,
         displayName: name
-      }));
+      }) : prev);
       setUserProfile(profile);
       setNeedsProfile(false);
       
