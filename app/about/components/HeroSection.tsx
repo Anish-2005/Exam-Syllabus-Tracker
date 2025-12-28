@@ -1,6 +1,12 @@
 import Image from 'next/image'
 
-export default function HeroSection({ isDark, textPrimary, textSecondary }) {
+type HeroSectionProps = {
+  isDark: boolean;
+  textPrimary: string;
+  textSecondary: string;
+};
+
+export default function HeroSection({ isDark, textPrimary, textSecondary }: HeroSectionProps) {
   return (
     <section className="text-center mb-20 max-w-3xl mx-auto px-4">
       <div className="flex justify-center mb-8">

@@ -1,7 +1,21 @@
 import { Users, FileText, BarChart2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function HowItWorksSection({ isDark, cardBg, borderColor, textPrimary, textSecondary }) {
+interface HowItWorksSectionProps {
+  isDark: boolean;
+  cardBg: string;
+  borderColor: string;
+  textPrimary: string;
+  textSecondary: string;
+}
+
+export default function HowItWorksSection({
+  isDark,
+  cardBg,
+  borderColor,
+  textPrimary,
+  textSecondary,
+}: HowItWorksSectionProps) {
   const steps = [
     {
       icon: <Users className="w-9 h-9" />,

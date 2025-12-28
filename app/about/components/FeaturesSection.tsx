@@ -1,6 +1,28 @@
 import { motion } from 'framer-motion'
 
-export default function FeaturesSection({ features = [], isDark, cardBg, borderColor, textPrimary, textSecondary }) {
+type Feature = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+};
+
+type FeaturesSectionProps = {
+  features?: Feature[];
+  isDark: boolean;
+  cardBg: string;
+  borderColor: string;
+  textPrimary: string;
+  textSecondary: string;
+};
+
+export default function FeaturesSection({
+  features = [],
+  isDark,
+  cardBg,
+  borderColor,
+  textPrimary,
+  textSecondary,
+}: FeaturesSectionProps) {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
       <h2 className={`text-3xl font-semibold text-center mb-12 ${textPrimary}`}>

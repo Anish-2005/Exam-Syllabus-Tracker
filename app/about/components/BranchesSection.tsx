@@ -1,7 +1,15 @@
 import { CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function BranchesSection({ branches, isDark, cardBg, borderColor, textPrimary }) {
+type BranchesSectionProps = {
+  branches: string[];
+  isDark: boolean;
+  cardBg: string;
+  borderColor: string;
+  textPrimary: string;
+};
+
+export default function BranchesSection({ branches, isDark, cardBg, borderColor, textPrimary }: BranchesSectionProps) {
   return (
     <section className={`max-w-5xl mx-auto px-6 sm:px-10 mb-24 ${cardBg} border ${borderColor} rounded-2xl shadow-md py-8`}>
       <h2 className={`text-3xl font-semibold text-center mb-10 ${textPrimary}`}>

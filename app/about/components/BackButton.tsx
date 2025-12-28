@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function BackButton({ isDark }) {
+export default function BackButton({ isDark }: { isDark: boolean }) {
   return (
     <motion.div
       className="fixed top-5 left-5 z-50"

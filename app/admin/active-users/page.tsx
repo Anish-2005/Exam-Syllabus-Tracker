@@ -10,20 +10,30 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { db } from '@/app/lib/firebase';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function UserDataPage() {
     const { user: currentUser } = useAuth();
     const { user, logout } = useAuth();
-    const router =useRouter();
+    const router = useRouter();
+    const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [users, setUsers] = useState([]);
-    const [userProgress, setUserProgress] = useState({});
-    const [syllabusData, setSyllabusData] = useState({});
+    interface UserData {
+        id: string;
+        name: string;
+        email: string;
+        photoURL: string | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+    }
+
+    const [users, setUsers] = useState<UserData[]>([]);
+    const [userProgress, setUserProgress] = useState<{ [userId: string]: UserProgressData }>({});
+    const [syllabusData, setSyllabusData] = useState<{ [key: string]: SubjectInfo }>({});
     const { theme, toggleTheme, isDark } = useTheme();
     const [isAdmin, setIsAdmin] = useState(false);
-    const [expandedUser, setExpandedUser] = useState(null);
+    const [expandedUser, setExpandedUser] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     // Theme styles
@@ -46,7 +56,7 @@ export default function UserDataPage() {
         try {
             // Fetch users
             const usersSnapshot = await getDocs(collection(db, 'users'));
-            const usersData = [];
+            const usersData: UserData[] = [];
 
             usersSnapshot.forEach((doc) => {
                 const userData = doc.data();
@@ -61,19 +71,23 @@ export default function UserDataPage() {
             });
 
             // Sort by creation date (newest first)
-            const sortedUsers = usersData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            const sortedUsers = usersData.sort(
+                (a, b) =>
+                    ((b.createdAt ? b.createdAt.getTime() : 0) -
+                    (a.createdAt ? a.createdAt.getTime() : 0))
+            );
             setUsers(sortedUsers);
 
             // Fetch syllabus data
             const syllabusSnapshot = await getDocs(collection(db, 'syllabus'));
-            const syllabusMap = {};
+            const syllabusMap: { [key: string]: any } = {};
             syllabusSnapshot.forEach((doc) => {
                 syllabusMap[doc.id] = doc.data();
             });
             setSyllabusData(syllabusMap);
 
             // Fetch progress for each user
-            const progressData = {};
+            const progressData: { [key: string]: any } = {};
             for (const user of sortedUsers) {
                 const progressDoc = await getDoc(doc(db, 'userProgress', user.id));
                 if (progressDoc.exists()) {
@@ -88,7 +102,11 @@ export default function UserDataPage() {
         }
     };
 
-    const formatDate = (date) => {
+    interface FormatDate {
+        (date: Date | null): string;
+    }
+
+    const formatDate: FormatDate = (date) => {
         if (!date) return 'Unknown';
         return date.toLocaleString('en-US', {
             year: 'numeric',
@@ -99,16 +117,49 @@ export default function UserDataPage() {
         });
     };
 
-    const toggleUserExpand = (userId) => {
+    interface ToggleUserExpand {
+        (userId: string): void;
+    }
+
+    const toggleUserExpand: ToggleUserExpand = (userId) => {
         setExpandedUser(expandedUser === userId ? null : userId);
     };
 
-    const calculateProgress = (subjectProgress, subjectId) => {
-        const subjectInfo = syllabusData[subjectId];
-        if (!subjectInfo || !subjectInfo.modules) return 0;
+    interface SubjectModule {
+        name: string;
+        // Add other properties if needed
+    }
 
-        const totalModules = subjectInfo.modules.length;
-        if (totalModules === 0) return 0;
+    interface SubjectInfo {
+        name: string;
+        code: string;
+        branch: string;
+        year: number;
+        semester: number;
+        modules: SubjectModule[];
+        // Add other properties if needed
+    }
+
+    interface SubjectProgress {
+        [key: string]: boolean | any;
+        // e.g., module_0: true, module_1: false, etc.
+    }
+
+    interface ProgressResult {
+        percentage: number;
+        completedCount: number;
+        totalModules: number;
+    }
+
+    const calculateProgress = (
+        subjectProgress: SubjectProgress,
+        subjectId: string
+    ): ProgressResult => {
+        const subjectInfo: SubjectInfo = syllabusData[subjectId];
+        if (!subjectInfo || !subjectInfo.modules) return { percentage: 0, completedCount: 0, totalModules: 0 };
+
+        const totalModules: number = subjectInfo.modules.length;
+        if (totalModules === 0) return { percentage: 0, completedCount: 0, totalModules: 0 };
 
         let completedCount = 0;
 
@@ -125,8 +176,17 @@ export default function UserDataPage() {
         };
     };
 
-    const renderProgressData = (userId) => {
-        const progress = userProgress[userId];
+    interface RenderProgressDataProps {
+        userId: string;
+    }
+
+    interface UserProgressData {
+        [key: string]: SubjectProgress | any;
+        updatedAt?: { toDate: () => Date };
+    }
+
+    const renderProgressData = (userId: string): JSX.Element => {
+        const progress: UserProgressData = userProgress[userId];
         if (!progress) return <div className="text-sm text-gray-500 dark:text-gray-400 italic">No progress data available</div>;
 
         return (
@@ -141,10 +201,11 @@ export default function UserDataPage() {
                         if (key === 'updatedAt') return null;
 
                         const subjectId = key.replace('subject_', '');
-                        const subjectInfo = syllabusData[subjectId];
+                        const subjectInfo: SubjectInfo = syllabusData[subjectId];
                         if (!subjectInfo) return null;
 
-                        const progress = calculateProgress(value, subjectId);
+                        const subjectProgress: SubjectProgress = value;
+                        const progressResult: ProgressResult = calculateProgress(subjectProgress, subjectId);
 
                         return (
                             <div key={key} className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
@@ -158,11 +219,11 @@ export default function UserDataPage() {
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <div className={`text-2xl font-bold ${progress.percentage === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                                            {progress.percentage}%
+                                        <div className={`text-2xl font-bold ${progressResult.percentage === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                            {progressResult.percentage}%
                                         </div>
                                         <div className="text-sm text-gray-600 dark:text-gray-400">
-                                            {progress.completedCount} of {progress.totalModules} modules
+                                            {progressResult.completedCount} of {progressResult.totalModules} modules
                                         </div>
                                     </div>
                                 </div>
@@ -170,15 +231,15 @@ export default function UserDataPage() {
                                 <div className="mb-4">
                                     <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
                                         <div
-                                            className={`h-3 rounded-full transition-all duration-300 ${progress.percentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
-                                            style={{ width: `${progress.percentage}%` }}
+                                            className={`h-3 rounded-full transition-all duration-300 ${progressResult.percentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                                            style={{ width: `${progressResult.percentage}%` }}
                                         ></div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {subjectInfo.modules?.map((module, index) => {
-                                        const isCompleted = value[`module_${index}`] === true;
+                                    {subjectInfo.modules?.map((module: SubjectModule, index: number) => {
+                                        const isCompleted: boolean = subjectProgress[`module_${index}`] === true;
 
                                         return (
                                             <div
@@ -374,7 +435,7 @@ export default function UserDataPage() {
                                 <Link
                                     href="/dashboard"
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                    className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/dashboard'
                                         ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                         : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                         }`}
@@ -385,7 +446,7 @@ export default function UserDataPage() {
                                 <Link
                                     href="/chat"
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/chat'
+                                    className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/chat'
                                         ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                         : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                         }`}
@@ -752,7 +813,7 @@ export default function UserDataPage() {
                                                     </tr>
                                                     {expandedUser === user.id && (
                                                         <tr>
-                                                            <td colSpan="6" className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
+                                                            <td colSpan={6} className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
                                                                 {renderProgressData(user.id)}
                                                             </td>
                                                         </tr>

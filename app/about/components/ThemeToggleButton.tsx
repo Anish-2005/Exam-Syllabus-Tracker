@@ -2,7 +2,12 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Moon, Sun } from "lucide-react"
 
-export default function ThemeToggleButton({ isDark, toggleTheme }) {
+type ThemeToggleButtonProps = {
+  isDark: boolean;
+  toggleTheme: () => void;
+};
+
+export default function ThemeToggleButton({ isDark, toggleTheme }: ThemeToggleButtonProps) {
   return (
     <button
       onClick={toggleTheme}

@@ -3,6 +3,7 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import type { DocumentData } from 'firebase/firestore';
 import { useTheme } from '@/app/context/ThemeContext';
 import { Sun, Moon, BookOpen, ChevronDown, ChevronUp, RefreshCw, User, BarChart2, Target, Award, TrendingUp, X, Menu, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -10,18 +11,20 @@ import Image from 'next/image';
 import { db } from '@/app/lib/firebase';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+
 
 export default function KraKpiPage() {
     const { user, logout } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [userProgress, setUserProgress] = useState(null);
+    const [userProgress, setUserProgress] = useState<DocumentData | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [syllabusData, setSyllabusData] = useState({});
+    const [syllabusData, setSyllabusData] = useState<{ [key: string]: SubjectInfo }>({});
     const router = useRouter();
+    const pathname = usePathname();
     const { theme, toggleTheme, isDark } = useTheme();
     const [activeTab, setActiveTab] = useState('kpi');
-    const [selectedSemester, setSelectedSemester] = useState('all');
+    const [selectedSemester, setSelectedSemester] = useState<string | number>('all');
 
 
     // Enhanced theme styles
@@ -40,6 +43,7 @@ export default function KraKpiPage() {
     }, [user]);
 
     const fetchUserData = async () => {
+        if (!user) return;
         setLoading(true);
         try {
             // Fetch user progress
@@ -57,7 +61,7 @@ export default function KraKpiPage() {
                     .filter(key => key.startsWith('subject_'))
                     .map(key => key.replace('subject_', ''));
 
-                const syllabusMap = {};
+                const syllabusMap: { [key: string]: any } = {};
                 for (const subjectId of subjectIds) {
                     const subjectDoc = await getDoc(doc(db, 'syllabus', subjectId));
                     if (subjectDoc.exists()) {
@@ -80,12 +84,34 @@ export default function KraKpiPage() {
         }
     };
 
-    const calculateProgress = (subjectProgress, subjectId) => {
-        const subjectInfo = syllabusData[subjectId];
-        if (!subjectInfo || !subjectInfo.modules) return 0;
+    interface SubjectInfo {
+        name: string;
+        code: string;
+        year: number;
+        semester: string | number;
+        modules: any[];
+        [key: string]: any;
+    }
 
-        const totalModules = subjectInfo.modules.length;
-        if (totalModules === 0) return 0;
+    interface SubjectProgress {
+        [key: string]: boolean;
+    }
+
+    interface ProgressResult {
+        percentage: number;
+        completedCount: number;
+        totalModules: number;
+    }
+
+    const calculateProgress = (
+        subjectProgress: SubjectProgress,
+        subjectId: string
+    ): ProgressResult => {
+        const subjectInfo: SubjectInfo = syllabusData[subjectId];
+        if (!subjectInfo || !subjectInfo.modules) return { percentage: 0, completedCount: 0, totalModules: 0 };
+
+        const totalModules: number = subjectInfo.modules.length;
+        if (totalModules === 0) return { percentage: 0, completedCount: 0, totalModules: 0 };
 
         let completedCount = 0;
 
@@ -111,10 +137,14 @@ export default function KraKpiPage() {
         return Array.from(semesters).sort();
     };
 
-    const handleSemesterChange = async (semester) => {
+    interface HandleSemesterChangeParams {
+        semester: string | number;
+    }
+
+    const handleSemesterChange = async (semester: string | number): Promise<void> => {
         setSelectedSemester(semester);
         try {
-            await setDoc(doc(db, 'userPreferences', user.uid), {
+            await setDoc(doc(db, 'userPreferences', user!.uid), {
                 defaultSemesterKPI: semester
             }, { merge: true });
         } catch (error) {
@@ -145,7 +175,7 @@ export default function KraKpiPage() {
                     semester: subjectInfo.semester
                 };
             })
-            .filter(item => {
+            .filter((item): item is NonNullable<typeof item> => {
                 if (item === null) return false;
                 if (selectedSemester === 'all') return true;
                 return item.semester === selectedSemester;
@@ -158,7 +188,7 @@ export default function KraKpiPage() {
         if (kpiData.length === 0) return [];
 
         // Group by year and semester
-        const kraData = {};
+        const kraData: { [key: string]: { name: string; subjects: number; totalModules: number; completedModules: number; avgProgress: number } } = {};
 
         kpiData.forEach(item => {
             const key = `Year ${item.year} - Semester ${item.semester}`;
@@ -191,7 +221,7 @@ export default function KraKpiPage() {
         const kpiData = getKpiData();
         if (kpiData.length === 0) return [];
 
-        const yearlyData = {};
+        const yearlyData: { [key: string]: { name: string; subjects: number; totalModules: number; completedModules: number; progress: number } } = {};
 
         kpiData.forEach(item => {
             const yearKey = `Year ${item.year}`;
@@ -222,7 +252,23 @@ export default function KraKpiPage() {
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+    const renderCustomizedLabel = ({
+        cx,
+        cy,
+        midAngle,
+        innerRadius,
+        outerRadius,
+        percent,
+        index
+    }: {
+        cx: number;
+        cy: number;
+        midAngle: number;
+        innerRadius: number;
+        outerRadius: number;
+        percent: number;
+        index: number;
+    }) => {
         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
         const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
         const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
@@ -388,7 +434,7 @@ export default function KraKpiPage() {
                                 <Link
                                     href="/dashboard"
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                    className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/dashboard'
                                         ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                         : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                         }`}
@@ -399,7 +445,7 @@ export default function KraKpiPage() {
                                 <Link
                                     href="/chat"
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/chat'
+                                    className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/chat'
                                         ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                         : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                         }`}

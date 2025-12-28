@@ -1,7 +1,12 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
-export default function CallToAction({ isDark, textPrimary }) {
+interface CallToActionProps {
+  isDark: boolean;
+  textPrimary: string;
+}
+
+export default function CallToAction({ isDark, textPrimary }: CallToActionProps) {
   return (
     <section className="text-center max-w-xl mx-auto mb-16 px-4">
       <h2 className={`text-3xl font-bold mb-8 ${textPrimary}`}>
