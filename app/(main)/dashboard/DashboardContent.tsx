@@ -9,21 +9,25 @@ import { db } from '../../lib/firebase';
 import { useTheme } from '../../context/ThemeContext';
 import { Upload,MessageCircle, ChevronDown, ChevronUp, BarChart2, Bookmark, User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Copy, Activity, Clipboard, PieChart, BookOpen, Zap, FileText, Download } from 'lucide-react'
 
-interface Subject {
-  name: string;
-  code: string;
-  modules: Module[];
-  semester?: string;
+interface Module {
+    name: string;
+    topics: string[] | string;
 }
 
-interface Module {
-  name: string;
-  topics: string[];
+interface Subject {
+    id?: string;
+    name: string;
+    code: string;
+    modules: Module[];
+    branch?: string;
+    year?: number;
+    semester?: number | undefined;
+    updatedAt?: any;
 }
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 
 export default function Dashboard() {
@@ -32,30 +36,31 @@ export default function Dashboard() {
     const [syllabusData, setSyllabusData] = useState<any[]>([]);
     const [selectedBranch, setSelectedBranch] = useState('');
     const [selectedYear, setSelectedYear] = useState(1);
-    const [selectedSemester, setSelectedSemester] = useState(null);
-    const [selectedSubject, setSelectedSubject] = useState(null);
+    const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
+    const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
     const [modules, setModules] = useState<Module[]>([]);
-    const [userProgress, setUserProgress] = useState({});
+    const [userProgress, setUserProgress] = useState<Record<string, Record<string, boolean>>>({});
     const { theme, toggleTheme, isDark } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedModuleIndex, setSelectedModuleIndex] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [showActions, setShowActions] = useState(false);
-    const [branches, setBranches] = useState([]);
+    const [branches, setBranches] = useState<string[]>([]);
     const [initialPrefsLoaded, setInitialPrefsLoaded] = useState(false);
-    const [years, setYears] = useState([]);
-    const [semesters, setSemesters] = useState([]);
-    const [selectedCopySubjects, setSelectedCopySubjects] = useState([]);
-    const [specializations, setSpecializations] = useState({});
+    const [years, setYears] = useState<number[]>([]);
+    const [semesters, setSemesters] = useState<number[]>([]);
+    const [selectedCopySubjects, setSelectedCopySubjects] = useState<string[]>([]);
+    const [specializations, setSpecializations] = useState<Record<string, any[]>>({});
     const [showAddSubject, setShowAddSubject] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
+    const pathname = usePathname();
     const pageTitle = "NeuraMark";
-    const [newSubject, setNewSubject] = useState<Subject>({
+    const [newSubject, setNewSubject] = useState<Partial<Subject>>({
         name: '',
         code: '',
         modules: [],
-        semester: ''
+        semester: undefined
     });
     const [newModule, setNewModule] = useState({
         name: '',
@@ -73,11 +78,11 @@ export default function Dashboard() {
     const [showCopyDialog, setShowCopyDialog] = useState(false);
     const [copyFromBranch, setCopyFromBranch] = useState('');
     const [copyFromYear, setCopyFromYear] = useState(1);
-    const [copyFromSemester, setCopyFromSemester] = useState(null);
+    const [copyFromSemester, setCopyFromSemester] = useState<number | null>(null);
     const [copyToBranch, setCopyToBranch] = useState('');
     const [copyToYear, setCopyToYear] = useState(1);
-    const [copyToSemester, setCopyToSemester] = useState(null);
-    const [copySubjects, setCopySubjects] = useState([]);
+    const [copyToSemester, setCopyToSemester] = useState<number | null>(null);
+    const [copySubjects, setCopySubjects] = useState<Subject[]>([]);
     const [isCopying, setIsCopying] = useState(false);
 
     const getAvailableSemesters = () => {
@@ -146,7 +151,7 @@ export default function Dashboard() {
         setIsEditingModule(true);
         setNewModule({
             name: modules[index].name,
-            topics: modules[index].topics.join(', ')
+            topics: Array.isArray(modules[index].topics) ? modules[index].topics.join(', ') : (modules[index].topics ?? '')
         });
     };
 
@@ -161,12 +166,12 @@ export default function Dashboard() {
         };
 
         try {
-            await updateDoc(doc(db, 'syllabus', selectedSubject!.id), {
+            await updateDoc(doc(db, 'syllabus', selectedSubject!.id!), {
                 modules: updatedModules
             });
             setModules(updatedModules);
             setSyllabusData(prev => prev.map(sub =>
-                sub.id === selectedSubject!.id ? { ...sub, modules: updatedModules } : sub
+                sub.id === selectedSubject!.id! ? { ...sub, modules: updatedModules } : sub
             ));
             setIsEditingModule(false);
             setEditingModuleIndex(null);
@@ -188,7 +193,7 @@ export default function Dashboard() {
                 setLoading(true);
 
                 const branchesSnapshot = await getDocs(collection(db, 'branches'));
-                const branchesData = [];
+                const branchesData: string[] = [];
                 branchesSnapshot.forEach((doc) => {
                     if (doc.data().name) {
                         branchesData.push(doc.data().name);
@@ -200,7 +205,7 @@ export default function Dashboard() {
                 }
 
                 const yearsSnapshot = await getDocs(collection(db, 'years'));
-                const yearsData = [];
+                const yearsData: number[] = [];
                 yearsSnapshot.forEach((doc) => {
                     const year = parseInt(doc.data().value || doc.id);
                     if (!isNaN(year)) {
@@ -210,7 +215,7 @@ export default function Dashboard() {
                 setYears(yearsData.sort((a, b) => a - b));
 
                 const specsSnapshot = await getDocs(collection(db, 'specializations'));
-                const specsData = {};
+                const specsData: Record<string, any[]> = {};
                 specsSnapshot.forEach(doc => {
                     specsData[doc.id] = doc.data().options || [];
                 });
@@ -270,12 +275,12 @@ export default function Dashboard() {
         }
     }, [selectedSubject]);
 
-    const updateModuleStatus = async (moduleIndex, completed) => {
+    const updateModuleStatus = async (moduleIndex: number, completed: boolean) => {
         if (!user || !selectedSubject) return;
 
         try {
             const progressRef = doc(db, 'userProgress', user.uid);
-            const subjectProgressKey = `subject_${selectedSubject.id}`;
+            const subjectProgressKey = `subject_${selectedSubject!.id!}`;
 
             const progressDoc = await getDoc(progressRef);
             const currentProgress = progressDoc.exists() ? progressDoc.data() : {};
@@ -298,20 +303,20 @@ export default function Dashboard() {
             console.error('Error updating module status:', error);
         }
     };
-    const toggleCopySubjectSelection = (subjectId) => {
+    const toggleCopySubjectSelection = (subjectId: string) => {
         setSelectedCopySubjects(prev =>
             prev.includes(subjectId)
                 ? prev.filter(id => id !== subjectId)
                 : [...prev, subjectId]
         );
     };
-    const isModuleCompleted = (subjectId, moduleIndex) => {
+    const isModuleCompleted = (subjectId: string | undefined, moduleIndex: number): boolean => {
         if (!userProgress || !subjectId) return false;
         const subjectKey = `subject_${subjectId}`;
         return userProgress[subjectKey]?.[`module_${moduleIndex}`] === true;
     };
 
-    const calculateProgress = (subject) => {
+    const calculateProgress = (subject: Subject) => {
         if (!subject?.modules || subject.modules.length === 0) return 0;
         if (!userProgress || !subject.id) return 0;
 
@@ -411,7 +416,7 @@ export default function Dashboard() {
         }
     };
 
-    const deleteBranch = async (branch) => {
+    const deleteBranch = async (branch: string) => {
         try {
             const q = query(collection(db, 'branches'), where('name', '==', branch));
             const querySnapshot = await getDocs(q);
@@ -451,7 +456,7 @@ export default function Dashboard() {
         }
     };
 
-    const deleteYear = async (year) => {
+    const deleteYear = async (year: number): Promise<void> => {
         try {
             const q = query(collection(db, 'years'), where('value', '==', year));
             const querySnapshot = await getDocs(q);
@@ -475,7 +480,7 @@ export default function Dashboard() {
         }
     };
 
-    const addSpecialization = async (branch, spec) => {
+    const addSpecialization = async (branch: string, spec: string) => {
         if (!spec.trim()) return;
         try {
             const specRef = doc(db, 'specializations', branch);
@@ -500,13 +505,13 @@ export default function Dashboard() {
         }
     };
 
-    const deleteSpecialization = async (branch, spec) => {
+    const deleteSpecialization = async (branch: string, spec: string) => {
         try {
             const specRef = doc(db, 'specializations', branch);
             const specDoc = await getDoc(specRef);
 
             if (specDoc.exists()) {
-                const updatedSpecs = specDoc.data().options.filter(s => s !== spec);
+                const updatedSpecs = specDoc.data().options.filter((s: any) => s !== spec);
                 await updateDoc(specRef, {
                     options: updatedSpecs
                 });
@@ -525,12 +530,12 @@ export default function Dashboard() {
         if (!newModule.name.trim()) return;
 
         const topicsArray = newModule.topics
-            ? newModule.topics.split(',').map(t => t.trim()).filter(t => t)
+            ? newModule.topics.split(',').map((t: string) => t.trim()).filter(Boolean)
             : [];
 
         setNewSubject({
             ...newSubject,
-            modules: [...newSubject.modules, {
+            modules: [...(newSubject.modules ?? []), {
                 name: newModule.name.trim(),
                 topics: topicsArray
             }]
@@ -538,14 +543,14 @@ export default function Dashboard() {
         setNewModule({ name: '', topics: '' });
     };
 
-    const removeModule = (index) => {
-        const updatedModules = [...newSubject.modules];
+    const removeModule = (index: number) => {
+        const updatedModules = [...(newSubject.modules ?? [])];
         updatedModules.splice(index, 1);
         setNewSubject({ ...newSubject, modules: updatedModules });
     };
 
     const submitSubject = async () => {
-        if (!newSubject.name.trim() || !newSubject.code.trim()) {
+        if ((newSubject.name ?? '').trim() === '' || (newSubject.code ?? '').trim() === '') {
             alert('Subject name and code are required');
             return;
         }
@@ -556,22 +561,24 @@ export default function Dashboard() {
             return;
         }
 
-        if (newSubject.modules.length === 0) {
+        if ((newSubject.modules ?? []).length === 0) {
             alert('Please add at least one module');
             return;
         }
 
         try {
-            const modules = newSubject.modules.map(module => ({
+            const modules = (newSubject.modules ?? []).map((module: Module) => ({
                 name: module.name.trim(),
                 topics: Array.isArray(module.topics)
                     ? module.topics
-                    : (module.topics || '').split(',').map(t => t.trim()).filter(t => t)
+                    : (typeof module.topics === 'string'
+                        ? module.topics.split(',').map((t: string) => t.trim()).filter(Boolean)
+                        : [])
             }));
 
             const subjectData = {
-                name: newSubject.name.trim(),
-                code: newSubject.code.trim(),
+                name: (newSubject.name ?? '').trim(),
+                code: (newSubject.code ?? '').trim(),
                 modules,
                 branch: selectedBranch,
                 year: selectedYear,
@@ -580,14 +587,14 @@ export default function Dashboard() {
             };
 
             if (editingSubject) {
-                await updateDoc(doc(db, 'syllabus', editingSubject.id), subjectData);
+                await updateDoc(doc(db, 'syllabus', editingSubject.id!), subjectData);
 
                 setSyllabusData(prev => prev.map(sub =>
-                    sub.id === editingSubject.id ? { ...sub, ...subjectData } : sub
+                    sub.id === editingSubject.id! ? { ...sub, ...subjectData } : sub
                 ));
 
                 if (selectedSubject?.id === editingSubject.id) {
-                    setSelectedSubject({ ...selectedSubject, ...subjectData });
+                    setSelectedSubject(prev => prev ? ({ ...prev, ...subjectData } as Subject) : prev);
                 }
             } else {
                 const docRef = await addDoc(collection(db, 'syllabus'), {
@@ -604,7 +611,7 @@ export default function Dashboard() {
                 name: '',
                 code: '',
                 modules: [],
-                semester: null
+                semester: undefined
             });
             setNewModule({
                 name: '',
@@ -617,7 +624,7 @@ export default function Dashboard() {
         }
     };
 
-    const deleteSubject = async (subjectId) => {
+    const deleteSubject = async (subjectId: string) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this subject? This action cannot be undone.");
         if (!confirmDelete) return;
 
@@ -659,7 +666,7 @@ export default function Dashboard() {
                 id: doc.id,
                 ...doc.data()
             }));
-            setCopySubjects(data);
+            setCopySubjects(data as Subject[]);
         } catch (error) {
             console.error('Error fetching subjects for copy:', error);
             alert('Failed to fetch subjects for copying');
@@ -676,7 +683,7 @@ export default function Dashboard() {
 
         // Determine which subjects to copy
         const subjectsToCopy = selectedCopySubjects.length > 0
-            ? copySubjects.filter(subject => selectedCopySubjects.includes(subject.id))
+            ? copySubjects.filter(subject => selectedCopySubjects.includes(subject.id ?? ''))
             : copySubjects;
 
         if (subjectsToCopy.length === 0) {
@@ -738,12 +745,12 @@ export default function Dashboard() {
         if (selectedCopySubjects.length === copySubjects.length) {
             setSelectedCopySubjects([]);
         } else {
-            setSelectedCopySubjects(copySubjects.map(subject => subject.id));
+            setSelectedCopySubjects(copySubjects.map(subject => subject.id).filter((id): id is string => typeof id === 'string'));
         }
     };
 
 
-    const exportSyllabusToPDF = (subject) => {
+    const exportSyllabusToPDF = (subject: Subject) => {
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             alert('Please allow pop-ups to download the PDF');
@@ -876,20 +883,22 @@ export default function Dashboard() {
             <h2>${subject.name}</h2>
             <div class="details">
                 <strong>Code:</strong> ${subject.code} | 
-                <strong>Branch:</strong> ${subject.branch} | 
-                <strong>Year:</strong> ${subject.year} | 
+                			<strong>Branch:</strong> ${subject.branch ?? ''} |
+                			<strong>Year:</strong> ${subject.year ?? ''} |
                 <strong>Semester:</strong> ${subject.semester}
             </div>
         </div>
         
-        ${subject.modules.map((module, index) => `
+        ${subject.modules.map((module: Module, index: number) => `
             <div class="module">
                 <div class="module-header">Module ${index + 1}: ${module.name}</div>
                 <div class="topics-label">Topics Covered:</div>
                 <ul class="topics">
-                    ${module.topics && module.topics.length > 0 
-                        ? module.topics.map(topic => `<li>${topic}</li>`).join('')
-                        : '<li>No topics specified</li>'
+                    ${Array.isArray(module.topics)
+                        ? (module.topics.map((topic: string) => `<li>${topic}</li>`).join(''))
+                        : (typeof module.topics === 'string' && module.topics.length > 0
+                            ? module.topics.split(',').map((t: string) => `<li>${t.trim()}</li>`).join('')
+                            : '<li>No topics specified</li>')
                     }
                 </ul>
             </div>
@@ -957,14 +966,14 @@ export default function Dashboard() {
                                 {/* Desktop Controls */}
                                 <div className="hidden md:flex items-center space-x-4">
 
-                                    {user.photoURL ? (
+                                    {user?.photoURL ? (
                                         <Image
-                                            src={user.photoURL}
-                                            alt={user.displayName || 'User'}
+                                            src={user!.photoURL}
+                                            alt={user!.displayName || 'User'}
                                             width={28}
                                             height={28}
                                             className="rounded-full"
-                                            key={user.uid} // Add key to force re-render when user changes
+                                            key={user!.uid} // Add key to force re-render when user changes
                                         />
                                     ) : (
                                         <div className="h-7 w-7 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
@@ -976,7 +985,7 @@ export default function Dashboard() {
                                     </span>
                                     <Link
                                         href="/chat"
-                                        className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all ${router.pathname === '/chat'
+                                        className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all ${pathname === '/chat'
                                             ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                             : ''
                                             }`}
@@ -985,7 +994,7 @@ export default function Dashboard() {
                                         <div className="relative">
                                             <MessageCircle
                                                 size={23}
-                                                className={`text-blue-400 transition-transform duration-200 ${router.pathname === '/chat'
+                                                className={`text-blue-400 transition-transform duration-200 ${pathname === '/chat'
                                                     ? 'scale-110 text-blue-500 dark:text-blue-300'
                                                     : 'hover:scale-110'
                                                     }`}
@@ -1100,7 +1109,7 @@ export default function Dashboard() {
                                     <Link
                                         href="/dashboard"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/dashboard'
                                             ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                             : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                             }`}
@@ -1111,7 +1120,7 @@ export default function Dashboard() {
                                     <Link
                                         href="/chat"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/chat'
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/chat'
                                             ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                             : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                             }`}
@@ -1377,7 +1386,7 @@ export default function Dashboard() {
                                                     className={`flex-1 pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
                                                 />
                                                 <button
-                                                    onClick={addSemester}
+                                                    onClick={() => {}}
                                                     className="p-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                                                 >
                                                     <Plus size={16} />
@@ -1713,13 +1722,13 @@ export default function Dashboard() {
                                                         className={`
                   p-2 mb-2 rounded flex items-start
                   ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}
-                  ${selectedCopySubjects.includes(subject.id) ? (theme === 'dark' ? 'ring-1 ring-indigo-500' : 'ring-1 ring-indigo-300') : ''}
+                        ${selectedCopySubjects.includes(subject.id ?? '') ? (theme === 'dark' ? 'ring-1 ring-indigo-500' : 'ring-1 ring-indigo-300') : ''}
                 `}
                                                     >
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedCopySubjects.includes(subject.id)}
-                                                            onChange={() => toggleCopySubjectSelection(subject.id)}
+                                                            checked={selectedCopySubjects.includes(subject.id ?? '')}
+                                                            onChange={() => toggleCopySubjectSelection(subject.id ?? '')}
                                                             className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                                         />
                                                         <div className="ml-2 flex-1">
@@ -1829,7 +1838,7 @@ export default function Dashboard() {
                                                         onChange={(e) => {
                                                             const semester = e.target.value ? Number(e.target.value) : null;
                                                             if (editingSubject) {
-                                                                setNewSubject({ ...newSubject, semester });
+                                                                setNewSubject({ ...newSubject, semester: semester ?? undefined });
                                                             } else {
                                                                 setSelectedSemester(semester);
                                                             }
@@ -1869,9 +1878,9 @@ export default function Dashboard() {
                                                         className={`w-full pl-3 pr-10 py-2 text-base ${borderColor} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${inputBg}`}
                                                     />
                                                 </div>
-                                                {newSubject.modules.length > 0 && (
+                                                {(newSubject.modules ?? []).length > 0 && (
                                                     <div className="space-y-2">
-                                                        {newSubject.modules.map((module, index) => (
+                                                        {(newSubject.modules ?? []).map((module, index) => (
                                                             <div
                                                                 key={index}
                                                                 className={`
@@ -1881,7 +1890,7 @@ export default function Dashboard() {
                                                             >
                                                                 <div>
                                                                     <span className="font-medium">{module.name}</span>
-                                                                    <span className="text-xs block">{module.topics?.join(', ') || 'No topics'}</span>
+                                                                    <span className="text-xs block">{Array.isArray(module.topics) ? module.topics.join(', ') : (module.topics ?? 'No topics')}</span>
                                                                 </div>
                                                                 <button
                                                                     onClick={() => removeModule(index)}
@@ -1917,7 +1926,7 @@ export default function Dashboard() {
                                                         className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
                                                         disabled={!newSubject.name || !newSubject.code ||
                                                             (editingSubject ? !newSubject.semester : !selectedSemester) ||
-                                                            newSubject.modules.length === 0}
+                                                            (newSubject.modules ?? []).length === 0}
                                                     >
                                                         {editingSubject ? 'Update Subject' : 'Save Subject'}
                                                     </button>
@@ -2034,6 +2043,7 @@ export default function Dashboard() {
                                                             const newModuleName = prompt('Enter new module name:');
                                                             if (newModuleName) {
                                                                 const newModuleTopics = prompt('Enter topics (comma separated):');
+                                                                if (!newModuleTopics) return;
                                                                 const topicsArray = newModuleTopics.split(',').map(t => t.trim()).filter(t => t);
 
                                                                 const updatedModules = [
@@ -2045,7 +2055,7 @@ export default function Dashboard() {
                                                                     }
                                                                 ];
 
-                                                                updateDoc(doc(db, 'syllabus', selectedSubject.id), {
+                                                                updateDoc(doc(db, 'syllabus', selectedSubject!.id!), {
                                                                     modules: updatedModules
                                                                 }).then(() => {
                                                                     setModules(updatedModules);
@@ -2131,7 +2141,7 @@ export default function Dashboard() {
                                                         key={index}
                                                         className={`
                                                         flex items-start p-3 rounded-lg border
-                                                        ${isModuleCompleted(selectedSubject.id, index)
+                                                        ${isModuleCompleted(selectedSubject!.id!, index)
                                                                 ? (theme === 'dark' ? 'bg-green-900/30 border-green-700' : 'bg-green-100 border-green-200')
                                                                 : (theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
                                                             }
@@ -2146,22 +2156,22 @@ export default function Dashboard() {
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                await updateModuleStatus(index, !isModuleCompleted(selectedSubject.id, index));
+                                                                await updateModuleStatus(index, !isModuleCompleted(selectedSubject!.id!, index));
                                                             }}
                                                             className={`
                                                             mt-1 flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center
-                                                            ${isModuleCompleted(selectedSubject.id, index)
+                                                            ${isModuleCompleted(selectedSubject!.id!, index)
                                                                     ? 'bg-indigo-600 border-indigo-600'
                                                                     : `${theme === 'dark' ? 'border-gray-500' : 'border-gray-300'} bg-transparent`
                                                                 }
                                                             transition-colors duration-200
                                                             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
                                                         `}
-                                                            aria-label={isModuleCompleted(selectedSubject.id, index) ? "Mark as incomplete" : "Mark as complete"}
+                                                            aria-label={isModuleCompleted(selectedSubject!.id!, index) ? "Mark as incomplete" : "Mark as complete"}
                                                             role="checkbox"
-                                                            aria-checked={isModuleCompleted(selectedSubject.id, index)}
+                                                            aria-checked={isModuleCompleted(selectedSubject!.id!, index)}
                                                         >
-                                                            {isModuleCompleted(selectedSubject.id, index) && (
+                                                            {isModuleCompleted(selectedSubject!.id!, index) && (
                                                                 <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
                                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                                 </svg>
@@ -2175,7 +2185,7 @@ export default function Dashboard() {
                                                                         Module {index + 1}: {module.name}
                                                                     </h3>
                                                                     <p className={`text-xs ${secondaryText} mt-1`}>
-                                                                        Topics: {module.topics?.join(', ')}
+                                                                        Topics: {Array.isArray(module.topics) ? module.topics.join(', ') : (module.topics ?? '')}
                                                                     </p>
                                                                 </div>
 
@@ -2202,12 +2212,12 @@ export default function Dashboard() {
                                                                                 const updatedModules = [...modules];
                                                                                 updatedModules.splice(index, 1);
 
-                                                                                updateDoc(doc(db, 'syllabus', selectedSubject.id), {
+                                                                                updateDoc(doc(db, 'syllabus', selectedSubject!.id!), {
                                                                                     modules: updatedModules
                                                                                 }).then(() => {
                                                                                     setModules(updatedModules);
                                                                                     setSyllabusData(prev => prev.map(sub =>
-                                                                                        sub.id === selectedSubject.id ? { ...sub, modules: updatedModules } : sub
+                                                                                        sub.id === selectedSubject!.id! ? { ...sub, modules: updatedModules } : sub
                                                                                     ));
                                                                                 });
                                                                             }}
