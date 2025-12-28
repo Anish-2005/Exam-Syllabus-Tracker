@@ -4,6 +4,33 @@
 import { Users, EyeOff, MessageCircle, Plus, Key, X, Search } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 
+type Room = {
+  id: string;
+  name: string;
+  members?: any[];
+  code?: string;
+  isGlobal?: boolean;
+};
+
+type MobileRoomListProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  hoverBg: string;
+  inputBg: string;
+  cardBg: string;
+  filteredRooms: Room[];
+  currentRoom: Room | null;
+  setCurrentRoom: (room: Room) => void;
+  setShowRoomList: (show: boolean) => void;
+  setShowCreateRoomModal: (show: boolean) => void;
+  setShowJoinRoomModal: (show: boolean) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  showRoomList: boolean;
+};
+
 export default function MobileRoomList({
   isDark,
   textColor,
@@ -21,7 +48,7 @@ export default function MobileRoomList({
   searchQuery,
   setSearchQuery,
   showRoomList
-}) {
+}: MobileRoomListProps) {
   return (
     <AnimatePresence>
       {showRoomList && (

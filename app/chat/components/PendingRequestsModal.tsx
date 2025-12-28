@@ -5,6 +5,30 @@ import { AnimatePresence, motion } from "framer-motion"
 import { X, Clock } from "lucide-react"
 import Image from "next/image"
 
+type PendingRequest = {
+  id: string;
+  userDetails: {
+    displayName?: string;
+    email?: string;
+    photoURL?: string;
+  };
+  requestedAt?: {
+    toDate?: () => Date;
+  };
+};
+
+type PendingRequestsModalProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  cardBg: string;
+  showPendingRequestsModal: boolean;
+  setShowPendingRequestsModal: (show: boolean) => void;
+  pendingRequests: PendingRequest[];
+  handleJoinRequest: (id: string, action: "approve" | "reject") => void;
+};
+
 export default function PendingRequestsModal({
   isDark,
   textColor,
@@ -15,7 +39,7 @@ export default function PendingRequestsModal({
   setShowPendingRequestsModal,
   pendingRequests,
   handleJoinRequest
-}) {
+}: PendingRequestsModalProps) {
   return (
     <AnimatePresence>
       {showPendingRequestsModal && (
@@ -64,7 +88,7 @@ export default function PendingRequestsModal({
                         {request.userDetails.photoURL ? (
                           <Image
                             src={request.userDetails.photoURL || "/placeholder.svg"}
-                            alt={request.userDetails.displayName}
+                            alt={request.userDetails.displayName || request.userDetails.email || "User photo"}
                             width={40}
                             height={40}
                             className="rounded-full"

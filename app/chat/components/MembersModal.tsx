@@ -5,6 +5,42 @@ import { AnimatePresence, motion } from "framer-motion"
 import { X, UserPlus, UserMinus } from "lucide-react"
 import Image from "next/image"
 
+type Member = {
+  id: string;
+  displayName?: string;
+  email?: string;
+  photoURL?: string;
+  role: "admin" | "moderator" | "member";
+};
+
+type Room = {
+  isGlobal?: boolean;
+  // add other properties as needed
+};
+
+type User = {
+  uid: string;
+  // add other properties as needed
+};
+
+interface MembersModalProps {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  cardBg: string;
+  showMembersModal: boolean;
+  setShowMembersModal: (show: boolean) => void;
+  currentRoomMembers: Member[];
+  currentRoom: Room | null;
+  user: User | null;
+  canManageMembers: boolean;
+  canManageRoles: boolean;
+  makeUserModerator: (id: string) => void;
+  removeUserModerator: (id: string) => void;
+  removeUserFromRoom: (id: string) => void;
+}
+
 export default function MembersModal({
   isDark,
   textColor,
@@ -21,7 +57,7 @@ export default function MembersModal({
   makeUserModerator,
   removeUserModerator,
   removeUserFromRoom
-}) {
+}: MembersModalProps) {
   return (
     <AnimatePresence>
       {showMembersModal && currentRoom && !currentRoom.isGlobal && (
@@ -69,7 +105,7 @@ export default function MembersModal({
                       {member.photoURL ? (
                         <Image
                           src={member.photoURL || "/placeholder.svg"}
-                          alt={member.displayName}
+                          alt={member.displayName || member.email || "Room member"}
                           width={40}
                           height={40}
                           className="rounded-full"

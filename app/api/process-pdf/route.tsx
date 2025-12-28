@@ -4,9 +4,27 @@ import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'fireb
 import { db } from '@/app/lib/firebase';
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
-export async function POST(request) {
+interface Module {
+    name: string;
+    topics: string[];
+}
+
+interface Subject {
+    name: string;
+    code: string;
+    modules: Module[];
+}
+
+interface SyllabusJSON {
+    branch: string;
+    year: number;
+    semester: number;
+    subjects: Subject[];
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
         console.log('PDF processing request received');
 
@@ -20,7 +38,7 @@ export async function POST(request) {
 
         console.log('API key found, processing form data...');
         const formData = await request.formData();
-        const file = formData.get('pdf');
+        const file = formData.get('pdf') as File | null;
 
         if (!file || !file.type.includes('pdf')) {
             console.error('Invalid file type:', file?.type);
@@ -101,10 +119,10 @@ ${pdfText.substring(0, 10000)}
 
 If you cannot find specific information, use reasonable defaults like "Computer Science" for branch, 1 for year, etc.`;
 
-        let result;
+        let result: any;
         try {
             result = await model.generateContent(prompt);
-        } catch (aiError) {
+        } catch (aiError: any) {
             console.error('Gemini AI error:', aiError);
             if (aiError.message.includes('API_KEY')) {
                 return NextResponse.json({
@@ -117,18 +135,18 @@ If you cannot find specific information, use reasonable defaults like "Computer 
         }
 
         const response = await result.response;
-        const text = response.text();
+        const text: string = response.text();
         console.log('Raw AI response:', text);
 
         // Clean the response to extract JSON
-        let jsonResponse;
+        let jsonResponse: SyllabusJSON;
         try {
             // Remove markdown code blocks if present
             const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             console.log('Cleaned AI response:', cleanedText);
-            jsonResponse = JSON.parse(cleanedText);
+            jsonResponse = JSON.parse(cleanedText) as SyllabusJSON;
             console.log('Parsed JSON response:', jsonResponse);
-        } catch (parseError) {
+        } catch (parseError: any) {
             console.error('Failed to parse Gemini response:', text);
             return NextResponse.json({
                 error: 'Failed to parse AI response. Please try with a clearer PDF.',
@@ -159,7 +177,7 @@ If you cannot find specific information, use reasonable defaults like "Computer 
             message: `Successfully processed ${subjects?.length || 0} subjects for ${branch || 'Unknown Branch'} Year ${year || 'N/A'} Semester ${semester || 'N/A'} (database operations skipped)`
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('PDF processing error:', error);
         return NextResponse.json({
             error: 'Internal server error during PDF processing'

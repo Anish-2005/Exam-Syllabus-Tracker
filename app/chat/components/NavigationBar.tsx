@@ -8,6 +8,24 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
+type NavigationBarProps = {
+  isDark: boolean
+  textColor: string
+  secondaryText: string
+  borderColor: string
+  hoverBg: string
+  toggleTheme: () => void
+  isSuperAdmin: boolean
+  currentRoom: { name: string; type: string; isGlobal?: boolean } | null
+  pendingRequests: any[]
+  canManageRequests: boolean
+  showRoomList: boolean
+  setShowRoomList: (show: boolean) => void
+  setSidebarOpen: (open: boolean) => void
+  setShowPendingRequestsModal: (show: boolean) => void
+  setShowMembersModal: (show: boolean) => void
+}
+
 export default function NavigationBar({
   isDark,
   textColor,
@@ -24,7 +42,7 @@ export default function NavigationBar({
   setSidebarOpen,
   setShowPendingRequestsModal,
   setShowMembersModal,
-}) {
+}: NavigationBarProps) {
   const { user } = useAuth()
   const router = useRouter()
 

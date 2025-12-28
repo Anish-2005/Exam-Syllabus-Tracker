@@ -4,6 +4,20 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { Key } from "lucide-react"
 
+type JoinRoomModalProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  inputBg: string;
+  cardBg: string;
+  showJoinRoomModal: boolean;
+  setShowJoinRoomModal: (show: boolean) => void;
+  joinRoomCode: string;
+  setJoinRoomCode: (code: string) => void;
+  joinRoomByCode: () => void;
+};
+
 export default function JoinRoomModal({
   isDark,
   textColor,
@@ -16,7 +30,7 @@ export default function JoinRoomModal({
   joinRoomCode,
   setJoinRoomCode,
   joinRoomByCode
-}) {
+}: JoinRoomModalProps) {
   return (
     <AnimatePresence>
       {showJoinRoomModal && (

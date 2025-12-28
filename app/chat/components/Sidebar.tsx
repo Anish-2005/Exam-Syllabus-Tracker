@@ -4,8 +4,38 @@
 import { User, X, MessageCircle, Users, Plus, Key, Clock } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+
+type SidebarProps = {
+  isDark: boolean
+  textColor: string
+  secondaryText: string
+  borderColor: string
+  hoverBg: string
+  cardBg: string
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+  user: {
+    photoURL?: string
+    displayName?: string
+    email?: string
+  }
+  logout: () => void
+  setShowJoinRoomModal: (show: boolean) => void
+  setShowCreateRoomModal: (show: boolean) => void
+  currentRoom?: {
+    type?: string
+    isGlobal?: boolean
+    // Add other properties as needed
+  }
+  pendingRequests: any[]
+  setShowPendingRequestsModal: (show: boolean) => void
+  setShowMembersModal: (show: boolean) => void
+  canManageRequests: boolean
+  // Add currentRoomMembers if used
+  currentRoomMembers?: any[]
+}
 
 export default function Sidebar({
   isDark,
@@ -25,8 +55,10 @@ export default function Sidebar({
   setShowPendingRequestsModal,
   setShowMembersModal,
   canManageRequests,
-}) {
+  currentRoomMembers = [],
+}: SidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
 
   return (
     <AnimatePresence>
@@ -60,13 +92,13 @@ export default function Sidebar({
             <div className="flex-1 overflow-y-auto p-4 space-y-1">
               <Link
                 href="/dashboard"
-                className={`flex items-center px-3 py-2 rounded-md ${hoverBg} ${router.pathname === "/dashboard" ? (isDark ? "bg-indigo-900 text-white" : "bg-indigo-100 text-indigo-700") : ""}`}
+                className={`flex items-center px-3 py-2 rounded-md ${hoverBg} ${pathname === "/dashboard" ? (isDark ? "bg-indigo-900 text-white" : "bg-indigo-100 text-indigo-700") : ""}`}
               >
                 Dashboard
               </Link>
               <Link
                 href="/chat"
-                className={`flex items-center px-3 py-2 rounded-md ${hoverBg} ${router.pathname === "/chat" ? (isDark ? "bg-indigo-900 text-white" : "bg-indigo-100 text-indigo-700") : ""}`}
+                className={`flex items-center px-3 py-2 rounded-md ${hoverBg} ${pathname === "/chat" ? (isDark ? "bg-indigo-900 text-white" : "bg-indigo-100 text-indigo-700") : ""}`}
               >
                 Chat
               </Link>

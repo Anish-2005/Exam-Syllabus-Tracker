@@ -69,13 +69,36 @@ export default function ChatPage() {
     const router = useRouter()
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const { theme, toggleTheme, isDark } = useTheme()
-    const [messages, setMessages] = useState([])
+    interface Message {
+        id: string
+        text: string
+        displayName: string
+        photoURL: string | null
+        userId: string
+        timestamp: any
+        isAdmin: boolean
+        isModerator: boolean
+        role: string
+    }
+    const [messages, setMessages] = useState<Message[]>([])
     const [newMessage, setNewMessage] = useState("")
-    const messagesEndRef = useRef(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
     const [isSuperAdmin, setIsSuperAdmin] = useState(false)
     const [loading, setLoading] = useState(true)
-    const [rooms, setRooms] = useState([])
-    const [currentRoom, setCurrentRoom] = useState(null)
+    type Room = {
+        id: string
+        name: string
+        isGlobal?: boolean
+        members?: any[]
+        admin?: string
+        type?: string
+        moderators?: string[]
+        code?: string
+        createdAt?: any
+    }
+    
+    const [rooms, setRooms] = useState<Room[]>([])
+    const [currentRoom, setCurrentRoom] = useState<Room | null>(null)
     const [showRoomList, setShowRoomList] = useState(true)
     const [showCreateRoomModal, setShowCreateRoomModal] = useState(false)
     const [showJoinRoomModal, setShowJoinRoomModal] = useState(false)
@@ -86,12 +109,30 @@ export default function ChatPage() {
     const [joinRoomCode, setJoinRoomCode] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
     const [roomMembers, setRoomMembers] = useState([])
-    const [allUsers, setAllUsers] = useState([])
+    const [allUsers, setAllUsers] = useState<any[]>([])
     const [showRoomSettings, setShowRoomSettings] = useState(false)
     const [newAdminId, setNewAdminId] = useState("")
     const [copiedCode, setCopiedCode] = useState(false)
-    const [pendingRequests, setPendingRequests] = useState([])
-    const [currentRoomMembers, setCurrentRoomMembers] = useState([])
+    interface PendingRequest {
+        id: string;
+        userDetails: {
+            displayName?: string;
+            email?: string;
+            photoURL?: string;
+        };
+        requestedAt?: {
+            toDate?: () => Date;
+        };
+        [key: string]: any;
+    }
+    const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
+    type MemberRole = "member" | "admin" | "moderator"
+    interface RoomMember {
+        id: string
+        role: MemberRole
+        [key: string]: any // for additional user fields from userDoc.data()
+    }
+    const [currentRoomMembers, setCurrentRoomMembers] = useState<RoomMember[]>([])
 
     // Enhanced color scheme
     const bgColor = isDark ? "bg-gray-900" : "bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100"
@@ -126,7 +167,7 @@ export default function ChatPage() {
                 }
 
                 const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                    const loadedRooms = []
+                    const loadedRooms: any[] = []
                     querySnapshot.forEach((doc) => {
                         loadedRooms.push({
                             id: doc.id,
@@ -187,11 +228,30 @@ export default function ChatPage() {
                 }
 
                 const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                    const loadedMessages = []
+                    interface Message {
+                        id: string
+                        text: string
+                        displayName: string
+                        photoURL: string | null
+                        userId: string
+                        timestamp: any
+                        isAdmin: boolean
+                        isModerator: boolean
+                        role: string
+                    }
+                    const loadedMessages: Message[] = []
                     querySnapshot.forEach((doc) => {
+                        const data = doc.data() as Partial<Message>;
                         loadedMessages.push({
                             id: doc.id,
-                            ...doc.data(),
+                            text: data.text ?? "",
+                            displayName: data.displayName ?? "",
+                            photoURL: data.photoURL ?? null,
+                            userId: data.userId ?? "",
+                            timestamp: data.timestamp ?? null,
+                            isAdmin: data.isAdmin ?? false,
+                            isModerator: data.isModerator ?? false,
+                            role: data.role ?? "member",
                         })
                     })
                     setMessages(loadedMessages)
@@ -218,15 +278,16 @@ export default function ChatPage() {
                 for (const memberId of currentRoom.members || []) {
                     const userDoc = await getDoc(doc(db, "users", memberId))
                     if (userDoc.exists()) {
+                        let role: MemberRole = "member"
+                        if (currentRoom.admin === memberId) {
+                            role = "admin"
+                        } else if (currentRoom.moderators?.includes(memberId)) {
+                            role = "moderator"
+                        }
                         memberDetails.push({
                             id: memberId,
                             ...userDoc.data(),
-                            role:
-                                currentRoom.admin === memberId
-                                    ? "admin"
-                                    : currentRoom.moderators?.includes(memberId)
-                                        ? "moderator"
-                                        : "member",
+                            role,
                         })
                     }
                 }
@@ -282,7 +343,7 @@ export default function ChatPage() {
             try {
                 const q = query(collection(db, "users"))
                 const querySnapshot = await getDocs(q)
-                const users = []
+                const users: any[] = []
                 querySnapshot.forEach((doc) => {
                     users.push({
                         id: doc.id,
@@ -306,14 +367,27 @@ export default function ChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
 
-    const handleSendMessage = async (e) => {
+    interface HandleSendMessageEvent extends React.FormEvent<HTMLFormElement> {}
+
+    interface MessageData {
+        text: string;
+        displayName: string;
+        photoURL: string | null;
+        userId: string;
+        timestamp: any;
+        isAdmin: boolean;
+        isModerator: boolean;
+        role: string;
+    }
+
+    const handleSendMessage = async (e: HandleSendMessageEvent): Promise<void> => {
         e.preventDefault();
         if (!newMessage.trim() || !user || !currentRoom) return;
 
         try {
-            const userRole = getUserRole();
+            const userRole: string = getUserRole();
 
-            const messageData = {
+            const messageData: MessageData = {
                 text: newMessage,
                 displayName: user.displayName || "Anonymous",
                 photoURL: user.photoURL || null,
@@ -412,42 +486,58 @@ export default function ChatPage() {
         }
     }
 
-    const handleJoinRequest = async (requestId, action) => {
-        try {
-            const requestDoc = await getDoc(doc(db, "joinRequests", requestId))
-            if (!requestDoc.exists()) return
+    interface JoinRequestData {
+        roomId: string;
+        userId: string;
+        [key: string]: any;
+    }
 
-            const requestData = requestDoc.data()
+    type JoinRequestAction = "approve" | "reject";
+
+    const handleJoinRequest = async (requestId: string, action: JoinRequestAction): Promise<void> => {
+        try {
+            const requestDoc = await getDoc(doc(db, "joinRequests", requestId));
+            if (!requestDoc.exists()) return;
+
+            const requestData = requestDoc.data() as JoinRequestData;
 
             if (action === "approve") {
                 await updateDoc(doc(db, "chatRooms", requestData.roomId), {
                     members: arrayUnion(requestData.userId),
-                })
+                });
             }
 
             await updateDoc(doc(db, "joinRequests", requestId), {
                 status: action === "approve" ? "approved" : "rejected",
                 handledAt: serverTimestamp(),
-                handledBy: user.uid,
-            })
+                handledBy: user ? user.uid : null,
+            });
         } catch (error) {
-            console.error("Error handling join request:", error)
+            console.error("Error handling join request:", error);
         }
+    };
+
+    interface MakeUserModeratorFn {
+        (userId: string): Promise<void>;
     }
 
-    const makeUserModerator = async (userId) => {
-        if (!currentRoom || !canManageRoles()) return
+    const makeUserModerator: MakeUserModeratorFn = async (userId) => {
+        if (!currentRoom || !canManageRoles()) return;
 
         try {
             await updateDoc(doc(db, "chatRooms", currentRoom.id), {
                 moderators: arrayUnion(userId),
-            })
+            });
         } catch (error) {
-            console.error("Error making user moderator:", error)
+            console.error("Error making user moderator:", error);
         }
+    };
+
+    interface RemoveUserModeratorFn {
+        (userId: string): Promise<void>;
     }
 
-    const removeUserModerator = async (userId) => {
+    const removeUserModerator: RemoveUserModeratorFn = async (userId) => {
         if (!currentRoom || !canManageRoles()) return
 
         try {
@@ -459,7 +549,11 @@ export default function ChatPage() {
         }
     }
 
-    const removeUserFromRoom = async (userId) => {
+    interface RemoveUserFromRoomFn {
+        (userId: string): Promise<void>;
+    }
+
+    const removeUserFromRoom: RemoveUserFromRoomFn = async (userId) => {
         if (!currentRoom || !canManageMembers()) return
 
         const confirmRemove = window.confirm("Are you sure you want to remove this user from the room?")
@@ -475,37 +569,46 @@ export default function ChatPage() {
         }
     }
 
-    const deleteRoom = async (roomId) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this room? This action cannot be undone.")
-        if (!confirmDelete) return
-
-        try {
-            await deleteDoc(doc(db, "chatRooms", roomId))
-            if (currentRoom && currentRoom.id === roomId) {
-                setCurrentRoom(null)
-            }
-        } catch (error) {
-            console.error("Error deleting room:", error)
-        }
+    interface DeleteRoomFn {
+        (roomId: string): Promise<void>;
     }
 
-    const leaveRoom = async (roomId) => {
-        const confirmLeave = window.confirm("Are you sure you want to leave this room?")
-        if (!confirmLeave) return
+    const deleteRoom: DeleteRoomFn = async (roomId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this room? This action cannot be undone.");
+        if (!confirmDelete) return;
 
         try {
+            await deleteDoc(doc(db, "chatRooms", roomId));
+            if (currentRoom && currentRoom.id === roomId) {
+                setCurrentRoom(null);
+            }
+        } catch (error) {
+            console.error("Error deleting room:", error);
+        }
+    };
+
+    interface LeaveRoomFn {
+        (roomId: string): Promise<void>;
+    }
+
+    const leaveRoom: LeaveRoomFn = async (roomId) => {
+        const confirmLeave = window.confirm("Are you sure you want to leave this room?");
+        if (!confirmLeave) return;
+
+        try {
+            if (!user) return;
             await updateDoc(doc(db, "chatRooms", roomId), {
                 members: arrayRemove(user.uid),
                 moderators: arrayRemove(user.uid),
-            })
+            });
 
             if (currentRoom && currentRoom.id === roomId) {
-                setCurrentRoom(null)
+                setCurrentRoom(null);
             }
         } catch (error) {
-            console.error("Error leaving room:", error)
+            console.error("Error leaving room:", error);
         }
-    }
+    };
 
     const transferAdmin = async () => {
         if (!newAdminId || !currentRoom) return
@@ -523,7 +626,11 @@ export default function ChatPage() {
         }
     }
 
-    const copyRoomCode = async (code) => {
+    interface CopyRoomCodeFn {
+        (code: string): Promise<void>;
+    }
+
+    const copyRoomCode: CopyRoomCodeFn = async (code) => {
         try {
             await navigator.clipboard.writeText(code)
             setCopiedCode(true)
@@ -533,17 +640,21 @@ export default function ChatPage() {
         }
     }
 
-    const formatTime = (timestamp) => {
-        if (!timestamp?.toDate) return ""
-        const date = timestamp.toDate()
-        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    interface FormatTime {
+        (timestamp: { toDate?: () => Date } | null | undefined): string;
     }
+
+    const formatTime: FormatTime = (timestamp) => {
+        if (!timestamp?.toDate) return "";
+        const date = timestamp.toDate();
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    };
 
     const getUserRole = () => {
         if (!currentRoom || currentRoom.isGlobal) return "member"
         if (isSuperAdmin) return "superadmin"
         if (currentRoom.admin === user?.uid) return "admin"
-        if (currentRoom.moderators?.includes(user?.uid)) return "moderator"
+        if (currentRoom.moderators?.includes(user?.uid ?? "")) return "moderator"
         return "member"
     }
 
@@ -564,7 +675,11 @@ export default function ChatPage() {
 
     const filteredRooms = rooms.filter((room) => room.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
-    const getRoleBadge = (role) => {
+    interface RoleBadgeProps {
+        role: string;
+    }
+
+    const getRoleBadge = (role: string): JSX.Element | null => {
         switch (role) {
             case "superadmin":
                 return <span className="ml-2 text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-bold shadow-lg">SUPER ADMIN</span>
@@ -601,9 +716,17 @@ export default function ChatPage() {
                         hoverBg={hoverBg}
                         toggleTheme={toggleTheme}
                         isSuperAdmin={isSuperAdmin}
-                        currentRoom={currentRoom}
+                        currentRoom={
+                            currentRoom
+                                ? {
+                                      name: currentRoom.name,
+                                      type: currentRoom.type ?? "public",
+                                      isGlobal: currentRoom.isGlobal,
+                                  }
+                                : null
+                        }
                         pendingRequests={pendingRequests}
-                        canManageRequests={canManageRequests}
+                        canManageRequests={canManageRequests()}
                         showRoomList={showRoomList}
                         setShowRoomList={setShowRoomList}
                         setSidebarOpen={setSidebarOpen}
@@ -620,15 +743,23 @@ export default function ChatPage() {
                         cardBg={cardBg}
                         sidebarOpen={sidebarOpen}
                         setSidebarOpen={setSidebarOpen}
-                        user={user}
+                        user={
+                            user
+                                ? {
+                                      photoURL: user.photoURL ?? undefined,
+                                      displayName: user.displayName ?? undefined,
+                                      email: user.email ?? undefined,
+                                  }
+                                : { photoURL: undefined, displayName: undefined, email: undefined }
+                        }
                         logout={logout}
                         setShowJoinRoomModal={setShowJoinRoomModal}
                         setShowCreateRoomModal={setShowCreateRoomModal}
-                        currentRoom={currentRoom}
+                        currentRoom={currentRoom ?? undefined}
                         pendingRequests={pendingRequests}
                         setShowPendingRequestsModal={setShowPendingRequestsModal}
                         setShowMembersModal={setShowMembersModal}
-                        canManageRequests={canManageRequests}
+                        canManageRequests={canManageRequests()}
                     />
 
                     {/* Main Content */}
@@ -644,7 +775,7 @@ export default function ChatPage() {
                                 cardBg={cardBg}
                                 filteredRooms={filteredRooms}
                                 currentRoom={currentRoom}
-                                setCurrentRoom={setCurrentRoom}
+                                    setCurrentRoom={(room) => setCurrentRoom(room)}
                                 setShowRoomList={setShowRoomList}
                                 setShowCreateRoomModal={setShowCreateRoomModal}
                                 setShowJoinRoomModal={setShowJoinRoomModal}
@@ -663,7 +794,7 @@ export default function ChatPage() {
                                 cardBg={cardBg}
                                 filteredRooms={filteredRooms}
                                 currentRoom={currentRoom}
-                                setCurrentRoom={setCurrentRoom}
+                                    setCurrentRoom={(room) => setCurrentRoom(room)}
                                 setShowRoomList={setShowRoomList}
                                 setShowCreateRoomModal={setShowCreateRoomModal}
                                 setShowJoinRoomModal={setShowJoinRoomModal}
@@ -699,6 +830,7 @@ export default function ChatPage() {
                                 setShowRoomList={setShowRoomList}
                                 copiedCode={copiedCode}
                                 copyRoomCode={copyRoomCode}
+                                showRoomList={showRoomList}
                             />
                         </div>
                     </main>
@@ -744,8 +876,8 @@ export default function ChatPage() {
                         currentRoomMembers={currentRoomMembers}
                         currentRoom={currentRoom}
                         user={user}
-                        canManageMembers={canManageMembers}
-                        canManageRoles={canManageRoles}
+                        canManageMembers={canManageMembers()}
+                        canManageRoles={canManageRoles()}
                         makeUserModerator={makeUserModerator}
                         removeUserModerator={removeUserModerator}
                         removeUserFromRoom={removeUserFromRoom}
@@ -772,13 +904,18 @@ export default function ChatPage() {
                         cardBg={cardBg}
                         showRoomSettings={showRoomSettings}
                         setShowRoomSettings={setShowRoomSettings}
-                        currentRoom={currentRoom}
+                        currentRoom={currentRoom ? { 
+                            ...currentRoom, 
+                            code: currentRoom.code ?? "", 
+                            type: currentRoom.type ?? "public",
+                            members: (currentRoom.members as { id: string; displayName?: string; email?: string }[] | undefined)
+                        } : null}
                         currentRoomMembers={currentRoomMembers}
                         user={user}
                         isSuperAdmin={isSuperAdmin}
                         newAdminId={newAdminId}
                         setNewAdminId={setNewAdminId}
-                        canManageRoles={canManageRoles}
+                        canManageRoles={canManageRoles()}
                         transferAdmin={transferAdmin}
                         deleteRoom={deleteRoom}
                         leaveRoom={leaveRoom}

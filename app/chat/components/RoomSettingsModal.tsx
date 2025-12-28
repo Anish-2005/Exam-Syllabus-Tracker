@@ -4,6 +4,35 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { X, Shield } from "lucide-react"
 
+type RoomSettingsModalProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  inputBg: string;
+  cardBg: string;
+  showRoomSettings: boolean;
+  setShowRoomSettings: (show: boolean) => void;
+  currentRoom: {
+    id: string;
+    name: string;
+    code: string;
+    type: string;
+    members?: Array<{ id: string; displayName?: string; email?: string }>;
+    admin?: string;
+    isGlobal?: boolean;
+  } | null;
+  currentRoomMembers: Array<{ id: string; displayName?: string; email?: string }>;
+  user: { uid: string } | null;
+  isSuperAdmin: boolean;
+  newAdminId: string;
+  setNewAdminId: (id: string) => void;
+  canManageRoles: boolean;
+  transferAdmin: () => void;
+  deleteRoom: (roomId: string) => void;
+  leaveRoom: (roomId: string) => void;
+};
+
 export default function RoomSettingsModal({
   isDark,
   textColor,
@@ -23,7 +52,7 @@ export default function RoomSettingsModal({
   transferAdmin,
   deleteRoom,
   leaveRoom
-}) {
+}: RoomSettingsModalProps) {
   return (
     <AnimatePresence>
       {showRoomSettings && currentRoom && !currentRoom.isGlobal && (

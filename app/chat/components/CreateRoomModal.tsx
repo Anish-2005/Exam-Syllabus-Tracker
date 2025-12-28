@@ -3,6 +3,22 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 
+type CreateRoomModalProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  inputBg: string;
+  cardBg: string;
+  showCreateRoomModal: boolean;
+  setShowCreateRoomModal: (show: boolean) => void;
+  newRoomName: string;
+  setNewRoomName: (name: string) => void;
+  newRoomType: string;
+  setNewRoomType: (type: string) => void;
+  createNewRoom: () => void;
+};
+
 export default function CreateRoomModal({
   isDark,
   textColor,
@@ -17,7 +33,7 @@ export default function CreateRoomModal({
   newRoomType,
   setNewRoomType,
   createNewRoom
-}) {
+}: CreateRoomModalProps) {
   return (
     <AnimatePresence>
       {showCreateRoomModal && (

@@ -13,6 +13,34 @@ import {
 import { motion } from "framer-motion"
 import { useState } from "react"
 
+type Room = {
+  id: string;
+  name: string;
+  isGlobal?: boolean;
+  members?: any[];
+  code?: string;
+  type?: string;
+};
+
+type RoomListProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  hoverBg: string;
+  inputBg: string;
+  cardBg: string;
+  filteredRooms: Room[];
+  currentRoom: Room | null;
+  setCurrentRoom: (room: Room) => void;
+  setShowRoomList: (show: boolean) => void;
+  setShowCreateRoomModal: (show: boolean) => void;
+  setShowJoinRoomModal: (show: boolean) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  showRoomList: boolean;
+};
+
 export default function RoomList({
   isDark,
   textColor,
@@ -30,10 +58,14 @@ export default function RoomList({
   searchQuery,
   setSearchQuery,
   showRoomList // only used for mobile
-}) {
+}: RoomListProps) {
   const [collapsed, setCollapsed] = useState(false)
 
-  const handleRoomClick = (room) => {
+  interface HandleRoomClick {
+    (room: Room): void;
+  }
+
+  const handleRoomClick: HandleRoomClick = (room) => {
     setCurrentRoom(room)
     // On mobile, hide the room list after selecting a room
     if (window.innerWidth < 768) {

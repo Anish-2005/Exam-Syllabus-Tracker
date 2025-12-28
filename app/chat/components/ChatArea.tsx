@@ -1,9 +1,40 @@
 // components/ChatArea.jsx
 "use client"
 
+import React from "react";
 import { Send, ChevronLeft, Users, Shield, Clock, Copy, Check, EyeOff,MessageCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
+
+type ChatAreaProps = {
+  isDark: boolean;
+  textColor: string;
+  secondaryText: string;
+  borderColor: string;
+  hoverBg: string;
+  inputBg: string;
+  cardBg: string;
+  currentRoom: any;
+  messages: any[];
+  loading: boolean;
+  newMessage: string;
+  setNewMessage: (value: string) => void;
+  handleSendMessage: (e: React.FormEvent<HTMLFormElement>) => void;
+  user: any;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  formatTime: (timestamp: any) => string;
+  getRoleBadge: (role: string) => React.ReactNode;
+  getUserRole: () => string;
+  canManageRequests: () => boolean;
+  pendingRequests: any[];
+  setShowPendingRequestsModal: (show: boolean) => void;
+  setShowMembersModal: (show: boolean) => void;
+  setShowRoomSettings: (show: boolean) => void;
+  setShowRoomList: (show: boolean) => void;
+  copiedCode: boolean;
+  copyRoomCode: (code: string) => void;
+  showRoomList: boolean;
+};
 
 export default function ChatArea({
   isDark,
@@ -33,7 +64,10 @@ export default function ChatArea({
   copiedCode,
   copyRoomCode,
   showRoomList
-}) {
+}: ChatAreaProps) {
+  // State for showing the Create Room modal
+  const [showCreateRoomModal, setShowCreateRoomModal] = React.useState(false);
+
   return (
     <div className={`flex-1 ${cardBg} rounded-2xl shadow-2xl ${borderColor} border-2 overflow-hidden flex flex-col backdrop-blur-lg`}>
       {!currentRoom ? (
