@@ -6,7 +6,16 @@ import { RefreshCw, X, User, Moon, Sun } from 'lucide-react'
 import UserAvatar from './UserAvatar'
 import { useTheme } from '@/app/context/ThemeContext'
 
-export default function ProgressSidebar({ isOpen, onClose, user, loading, onRefresh, logout }) {
+interface ProgressSidebarProps {
+  isOpen: boolean
+  onClose: () => void
+  user: any | null
+  loading: boolean
+  onRefresh: () => void
+  logout: () => void
+}
+
+export default function ProgressSidebar({ isOpen, onClose, user, loading, onRefresh, logout }: ProgressSidebarProps) {
   const { theme, toggleTheme, isDark } = useTheme()
   const textColor = isDark ? 'text-gray-100' : 'text-gray-900'
   const secondaryText = isDark ? 'text-gray-300' : 'text-gray-600'

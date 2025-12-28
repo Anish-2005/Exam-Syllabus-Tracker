@@ -11,14 +11,29 @@ import { User, Menu, Moon, Sun, Plus, Trash2, Edit, Save, X, Calendar, Clock, Bo
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+
+type Exam = {
+    id: string;
+    name: string;
+    date: string;
+    time?: string;
+    subject?: string;
+    semester?: number | string;
+    location?: string;
+    notes?: string;
+    userId?: string;
+    createdAt?: any;
+    updatedAt?: any;
+};
 
 export default function ExamsPage() {
     const { user } = useAuth();
-    const router=useRouter();
+    const router = useRouter();
+    const pathname = usePathname();
     const { theme, toggleTheme, isDark } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [exams, setExams] = useState([]);
+    const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddExam, setShowAddExam] = useState(false);
     const [newExam, setNewExam] = useState({
@@ -30,11 +45,17 @@ export default function ExamsPage() {
         location: '',
         notes: ''
     });
-    const [editingExamId, setEditingExamId] = useState(null);
+    const [editingExamId, setEditingExamId] = useState<string | null>(null);
     const [filter, setFilter] = useState('upcoming'); // 'upcoming', 'past', 'all'
-    const [enrolledSubjects, setEnrolledSubjects] = useState([]);
+    type EnrolledSubject = {
+        id: string;
+        name?: string;
+        semester?: number | string;
+        [key: string]: any;
+    };
+    const [enrolledSubjects, setEnrolledSubjects] = useState<EnrolledSubject[]>([]);
     const [selectedSemester, setSelectedSemester] = useState('all');
-    const [expandedExamId, setExpandedExamId] = useState(null);
+    const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
 
     const bgColor = isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
     const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg';
@@ -52,10 +73,22 @@ export default function ExamsPage() {
                 // Fetch exams
                 const q = query(collection(db, 'userExams'), where('userId', '==', user.uid));
                 const querySnapshot = await getDocs(q);
-                const examsData = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const examsData = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        name: data.name ?? '',
+                        date: data.date ?? '',
+                        time: data.time ?? '',
+                        subject: data.subject ?? '',
+                        semester: data.semester ?? '',
+                        location: data.location ?? '',
+                        notes: data.notes ?? '',
+                        userId: data.userId ?? '',
+                        createdAt: data.createdAt ?? null,
+                        updatedAt: data.updatedAt ?? null,
+                    };
+                });
                 setExams(examsData);
 
                 // Fetch enrolled subjects to get semesters
@@ -96,8 +129,9 @@ export default function ExamsPage() {
         return Array.from(semesters).sort();
     };
 
-    const handleSemesterChange = async (semester) => {
+    const handleSemesterChange = async (semester: string) => {
         setSelectedSemester(semester);
+        if (!user) return;
         try {
             await setDoc(doc(db, 'userPreferences', user.uid), {
                 defaultSemesterExams: semester
@@ -130,11 +164,11 @@ export default function ExamsPage() {
         
         // Sort upcoming exams: nearest first (ascending)
         if (filter === 'upcoming') {
-            return dateA - dateB;
+            return dateA.getTime() - dateB.getTime();
         }
         // Sort past exams: most recent first (descending)
         else if (filter === 'past') {
-            return dateB - dateA;
+            return dateB.getTime() - dateA.getTime();
         }
         // Sort all exams: upcoming first (nearest), then past (most recent)
         else {
@@ -143,8 +177,8 @@ export default function ExamsPage() {
             
             if (isAPast && !isBPast) return 1; // B is upcoming, A is past
             if (!isAPast && isBPast) return -1; // A is upcoming, B is past
-            if (!isAPast && !isBPast) return dateA - dateB; // Both upcoming, nearest first
-            return dateB - dateA; // Both past, most recent first
+            if (!isAPast && !isBPast) return dateA.getTime() - dateB.getTime(); // Both upcoming, nearest first
+            return dateB.getTime() - dateA.getTime(); // Both past, most recent first
         }
     });
 
@@ -155,6 +189,10 @@ export default function ExamsPage() {
         }
 
         try {
+            if (!user) {
+                alert('User not authenticated.');
+                return;
+            }
             const examData = {
                 ...newExam,
                 userId: user.uid,
@@ -179,6 +217,7 @@ export default function ExamsPage() {
                 date: '',
                 time: '',
                 subject: '',
+                semester: '',
                 location: '',
                 notes: ''
             });
@@ -189,7 +228,11 @@ export default function ExamsPage() {
         }
     };
 
-    const handleDeleteExam = async (examId) => {
+    interface HandleDeleteExam {
+        (examId: string): Promise<void>;
+    }
+
+    const handleDeleteExam: HandleDeleteExam = async (examId) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this exam?");
         if (!confirmDelete) return;
 
@@ -202,7 +245,11 @@ export default function ExamsPage() {
         }
     };
 
-    const handleEditExam = (exam) => {
+    interface EditExam {
+        (exam: Exam): void;
+    }
+
+    const handleEditExam: EditExam = (exam) => {
         setEditingExamId(exam.id);
         setNewExam({
             name: exam.name,
@@ -216,12 +263,27 @@ export default function ExamsPage() {
         setShowAddExam(true);
     };
 
-    const formatDate = (dateString) => {
-        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+    interface FormatDateOptions {
+        year: 'numeric' | '2-digit';
+        month: 'numeric' | '2-digit' | 'long' | 'short' | 'narrow';
+        day: 'numeric' | '2-digit';
+        weekday: 'long' | 'short' | 'narrow';
+    }
+
+    interface FormatDate {
+        (dateString: string): string;
+    }
+
+    const formatDate: FormatDate = (dateString) => {
+        const options: FormatDateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
-    const formatTime = (timeString) => {
+    interface FormatTime {
+        (timeString: string): string;
+    }
+
+    const formatTime: FormatTime = (timeString) => {
         if (!timeString) return '';
         const [hours, minutes] = timeString.split(':');
         const hour = parseInt(hours);
@@ -230,10 +292,14 @@ export default function ExamsPage() {
         return `${hour12}:${minutes} ${ampm}`;
     };
 
-    const getDaysRemaining = (dateString) => {
+    interface GetDaysRemaining {
+        (dateString: string): string;
+    }
+
+    const getDaysRemaining: GetDaysRemaining = (dateString) => {
         const today = new Date();
         const examDate = new Date(dateString);
-        const diffTime = examDate - today;
+        const diffTime = examDate.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return 'Today';
@@ -601,7 +667,7 @@ export default function ExamsPage() {
                                     <Link
                                         href="/dashboard"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/dashboard'
                                                 ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                                 : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                             }`}
@@ -612,7 +678,7 @@ export default function ExamsPage() {
                                     <Link
                                         href="/chat"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard/progress'
+                                        className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/dashboard/progress'
                                                 ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                                 : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                             }`}
@@ -744,7 +810,7 @@ export default function ExamsPage() {
                                         {getAvailableSemesters().map(semester => (
                                             <button
                                                 key={semester}
-                                                onClick={() => handleSemesterChange(semester)}
+                                                onClick={() => handleSemesterChange(String(semester))}
                                                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all transform hover:scale-105 active:scale-95 ${
                                                     selectedSemester === semester
                                                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'

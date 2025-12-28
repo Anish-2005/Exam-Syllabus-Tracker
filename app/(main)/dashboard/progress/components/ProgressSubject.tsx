@@ -3,13 +3,32 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import ProgressModule from './ProgressModule'
 import { useTheme } from '@/app/context/ThemeContext'
 
+type ProgressSubjectProps = {
+  subject: {
+    name: string
+    code: string
+    branch: string
+    year: number
+    semester: number
+  }
+  progress: {
+    percentage: number
+    completedCount: number
+    totalModules: number
+    completedModules: number[]
+  }
+  isExpanded: boolean
+  onToggle: () => void
+  modules: any[] // Replace 'any' with a more specific type if available
+}
+
 export default function ProgressSubject({ 
   subject, 
   progress, 
   isExpanded, 
   onToggle, 
   modules 
-}) {
+}: ProgressSubjectProps) {
   const { theme, isDark } = useTheme()
   const textColor = isDark ? 'text-gray-100' : 'text-gray-900'
   const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600'

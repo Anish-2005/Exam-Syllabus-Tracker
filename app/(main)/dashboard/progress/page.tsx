@@ -14,16 +14,31 @@ import ProgressSubject from './components/ProgressSubject'
 import ProgressSkeleton from './components/ProgressSkeleton'
 import ProgressEmptyState from './components/ProgressEmptyState'
 
+interface Module {
+  name: string
+  topics: string[] | string
+}
+
+interface Subject {
+  id?: string
+  name: string
+  code: string
+  modules: Module[]
+  semester?: number
+  branch?: string
+  year?: number
+}
+
 export default function MyProgressPage() {
   const { user, logout } = useAuth()
   const { theme } = useTheme()
-  const [loading, setLoading] = useState(true)
-  const [userProgress, setUserProgress] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [syllabusData, setSyllabusData] = useState({})
-  const [expandedSubjects, setExpandedSubjects] = useState([])
-  const [selectedSemester, setSelectedSemester] = useState('all')
-  const [userPreferences, setUserPreferences] = useState(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [userProgress, setUserProgress] = useState<Record<string, any> | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
+  const [syllabusData, setSyllabusData] = useState<Record<string, Subject>>({})
+  const [expandedSubjects, setExpandedSubjects] = useState<string[]>([])
+  const [selectedSemester, setSelectedSemester] = useState<string>('all')
+  const [userPreferences, setUserPreferences] = useState<Record<string, any> | null>(null)
   const router = useRouter()
 
   // Enhanced theme styles
@@ -42,6 +57,10 @@ export default function MyProgressPage() {
 
   const fetchUserData = async () => {
     setLoading(true)
+    if (!user) {
+      setLoading(false)
+      return
+    }
     try {
       // Fetch user preferences
       const preferencesDoc = await getDoc(doc(db, 'userPreferences', user.uid))
@@ -72,11 +91,11 @@ export default function MyProgressPage() {
           .filter(key => key.startsWith('subject_'))
           .map(key => key.replace('subject_', ''))
 
-        const syllabusMap = {}
+        const syllabusMap: Record<string, Subject> = {}
         for (const subjectId of subjectIds) {
           const subjectDoc = await getDoc(doc(db, 'syllabus', subjectId))
           if (subjectDoc.exists()) {
-            syllabusMap[subjectId] = subjectDoc.data()
+            syllabusMap[subjectId] = subjectDoc.data() as Subject
           }
         }
         setSyllabusData(syllabusMap)
@@ -88,7 +107,7 @@ export default function MyProgressPage() {
     }
   }
 
-  const toggleSubjectExpand = (subjectId) => {
+  const toggleSubjectExpand = (subjectId: string) => {
     setExpandedSubjects(prev =>
       prev.includes(subjectId)
         ? prev.filter(id => id !== subjectId)
@@ -96,9 +115,10 @@ export default function MyProgressPage() {
     )
   }
 
-  const handleSemesterChange = async (semester) => {
+  const handleSemesterChange = async (semester: string) => {
     setSelectedSemester(semester)
     try {
+      if (!user) return
       await updateDoc(doc(db, 'userPreferences', user.uid), {
         defaultSemester: semester
       })
@@ -107,16 +127,15 @@ export default function MyProgressPage() {
     }
   }
 
-  const getAvailableSemesters = () => {
-    const semesters = new Set()
-    Object.values(syllabusData).forEach(subject => {
-      if (subject.semester) {
-        semesters.add(subject.semester)
+  const getAvailableSemesters = (): number[] => {
+    const semesters = new Set<number>()
+    Object.values(syllabusData).forEach((subject: Subject) => {
+      if (subject && subject.semester != null) {
+        semesters.add(Number(subject.semester))
       }
     })
     return Array.from(semesters).sort((a, b) => a - b)
   }
-
   const filterSubjectsBySemester = () => {
     if (!userProgress) return []
     
@@ -131,7 +150,7 @@ export default function MyProgressPage() {
       })
   }
 
-  const calculateProgress = (subjectProgress, subjectId) => {
+  const calculateProgress = (subjectProgress: Record<string, any>, subjectId: string) => {
     const subjectInfo = syllabusData[subjectId]
     if (!subjectInfo || !subjectInfo.modules) return {
       percentage: 0,
@@ -280,10 +299,18 @@ export default function MyProgressPage() {
                     const progress = calculateProgress(value, subjectId)
                     const isExpanded = expandedSubjects.includes(subjectId)
 
+                    // Ensure branch and year are present (fallback to empty string/0 if missing)
+                    const subjectWithRequiredFields = {
+                      ...subjectInfo,
+                      branch: subjectInfo.branch ?? '',
+                      year: subjectInfo.year ?? 0,
+                      semester: subjectInfo.semester ?? 0,
+                    }
+
                     return (
                       <ProgressSubject
                         key={key}
-                        subject={subjectInfo}
+                        subject={subjectWithRequiredFields}
                         progress={progress}
                         isExpanded={isExpanded}
                         onToggle={() => toggleSubjectExpand(subjectId)}

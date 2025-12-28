@@ -1,7 +1,18 @@
 'use client'
 import { useTheme } from '@/app/context/ThemeContext'
 
-export default function ProgressModule({ module, index, isCompleted }) {
+interface ModuleProp {
+  name: string
+  topics: string[] | string
+}
+
+interface ProgressModuleProps {
+  module: ModuleProp
+  index: number
+  isCompleted: boolean
+}
+
+export default function ProgressModule({ module, index, isCompleted }: ProgressModuleProps) {
   const { theme } = useTheme()
   const textColor = theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
   const secondaryText = theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
@@ -28,11 +39,11 @@ export default function ProgressModule({ module, index, isCompleted }) {
               Status: Completed
             </div>
           )}
-          {module.topics?.length > 0 && (
+          {(Array.isArray(module.topics) ? module.topics.length > 0 : !!module.topics) && (
             <div className="mt-2">
               <div className={`text-xs ${secondaryText} font-medium`}>Topics:</div>
               <ul className="list-disc list-inside ml-4">
-                {module.topics.map((topic, i) => (
+                {(Array.isArray(module.topics) ? module.topics : [module.topics]).map((topic, i) => (
                   <li key={i} className={`text-xs ${secondaryText}`}>
                     {topic}
                   </li>

@@ -3,7 +3,15 @@
 import Image from 'next/image'
 import { User } from 'lucide-react'
 
-export default function UserAvatar({ user, size = 'md' }) {
+interface UserAvatarProps {
+  user: {
+    photoURL?: string;
+    displayName?: string;
+  };
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export default function UserAvatar({ user, size = 'md' }: UserAvatarProps) {
   const sizeClasses = {
     sm: 'h-7 w-7',
     md: 'h-8 w-8',

@@ -6,7 +6,14 @@ import { useTheme } from '@/app/context/ThemeContext'
 import { AnimatePresence, motion } from 'framer-motion'
 import UserAvatar from './UserAvatar'
 
-export default function ProgressHeader({ user, loading, onRefresh, onMenuOpen }) {
+interface ProgressHeaderProps {
+  user: any | null
+  loading: boolean
+  onRefresh: () => void
+  onMenuOpen: () => void
+}
+
+export default function ProgressHeader({ user, loading, onRefresh, onMenuOpen }: ProgressHeaderProps) {
   const { theme, toggleTheme, isDark } = useTheme()
   const textColor = isDark ? 'text-gray-100' : 'text-gray-900'
   const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg'
