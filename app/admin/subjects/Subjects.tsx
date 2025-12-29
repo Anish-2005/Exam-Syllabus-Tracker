@@ -8,17 +8,18 @@ import { useTheme } from '@/app/context/ThemeContext';
 import {User,RefreshCw,Menu, Moon, Sun, Trash2, Edit, ArrowLeft ,X, BookOpen, GraduationCap, Layers} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 export default function AdminSubjects() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [allSubjects, setAllSubjects] = useState([]);
+    const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
     const { theme, toggleTheme, isDark } = useTheme();
     const [isAdmin, setIsAdmin] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const pathname = usePathname();
 
     const bgColor = isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
     const cardBg = isDark ? 'bg-gray-800/90 backdrop-blur-lg' : 'bg-white/80 backdrop-blur-lg';
@@ -49,13 +50,24 @@ export default function AdminSubjects() {
         }
     };
 
-    const deleteSubject = async (subjectId) => {
+    interface Subject {
+        id: string;
+        name?: string;
+        code?: string;
+        branch?: string;
+        year?: number;
+        semester?: number;
+        modules?: any[];
+        [key: string]: any;
+    }
+
+    const deleteSubject = async (subjectId: string) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this subject? This action cannot be undone.");
         if (!confirmDelete) return;
 
         try {
             await deleteDoc(doc(db, 'syllabus', subjectId));
-            setAllSubjects(allSubjects.filter(sub => sub.id !== subjectId));
+            setAllSubjects((prev: Subject[]) => prev.filter((sub) => sub.id !== subjectId));
             alert('Subject deleted successfully');
         } catch (error) {
             console.error('Error deleting subject:', error);
@@ -63,7 +75,7 @@ export default function AdminSubjects() {
         }
     };
 
-    const handleViewSubject = (subject) => {
+    const handleViewSubject = (subject: Subject) => {
         // Store the subject in session storage to be retrieved on the dashboard
         sessionStorage.setItem('subjectToView', JSON.stringify(subject));
         router.push(`/dashboard?subject=${subject.id}`);
@@ -83,6 +95,15 @@ export default function AdminSubjects() {
                 </div>
             </ProtectedRoute>
         );
+    }
+
+    function logout() {
+        // Remove user session and redirect to login
+        if (typeof window !== "undefined") {
+            sessionStorage.clear();
+            localStorage.clear();
+        }
+        router.push("/login");
     }
 
     return (
@@ -239,7 +260,7 @@ export default function AdminSubjects() {
                                 <Link
                                     href="/dashboard"
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/dashboard'
+                                    className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/dashboard'
                                         ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                         : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                         }`}
@@ -250,7 +271,7 @@ export default function AdminSubjects() {
                                 <Link
                                     href="/chat"
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`px-3 py-2 rounded-md text-base font-medium ${router.pathname === '/chat'
+                                    className={`px-3 py-2 rounded-md text-base font-medium ${pathname === '/chat'
                                         ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200'
                                         : isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                                         }`}

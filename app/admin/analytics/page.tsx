@@ -422,7 +422,11 @@ export default function AdminKraKpiPage() {
         <ProtectedRoute>
             <div className={`min-h-screen ${bgColor} transition-colors duration-200 pb-8`}>
                 <Navbar
-                    user={user}
+                    user={user ? {
+                        displayName: user.displayName ?? undefined,
+                        email: user.email ?? undefined,
+                        photoURL: user.photoURL ?? undefined
+                    } : null}
                     logout={logout}
                     toggleTheme={toggleTheme}
                     isDark={isDark}
