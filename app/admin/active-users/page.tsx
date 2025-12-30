@@ -1,5 +1,6 @@
 // app/admin/active-users/page.js
 'use client'
+import React from 'react';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState, useCallback } from 'react';
@@ -191,7 +192,7 @@ export default function UserDataPage() {
         updatedAt?: { toDate: () => Date };
     }
 
-    const renderProgressData = (userId: string): JSX.Element => {
+    const renderProgressData = (userId: string): React.ReactElement => {
         const progress: UserProgressData = userProgress[userId];
         return (
             <UserProgressDetails
