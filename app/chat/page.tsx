@@ -1,5 +1,5 @@
 "use client"
-import { Suspense, useEffect, useState, useRef } from "react"
+import React, { Suspense, useEffect, useState, useRef } from "react"
 import ProtectedRoute from "../components/ProtectedRoute"
 import { useAuth } from "../context/AuthContext"
 import { useTheme } from "../context/ThemeContext"
@@ -679,7 +679,7 @@ export default function ChatPage() {
         role: string;
     }
 
-    const getRoleBadge = (role: string): JSX.Element | null => {
+    const getRoleBadge = (role: string): React.ReactElement | null => {
         switch (role) {
             case "superadmin":
                 return <span className="ml-2 text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-bold shadow-lg">SUPER ADMIN</span>
