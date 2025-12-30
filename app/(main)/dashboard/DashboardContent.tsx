@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useTheme } from '../../context/ThemeContext';
@@ -229,7 +229,7 @@ export default function Dashboard() {
         };
 
         if (user) fetchConfig();
-    }, [user]);
+    }, [user, selectedBranch]);
 
     useEffect(() => {
         const fetchSyllabusData = async () => {
@@ -374,24 +374,26 @@ export default function Dashboard() {
         };
 
         loadUserPreferences();
+     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]); // Only depend on user
 
-    // Replace your current save preferences useEffect with this:
+    const saveUserPreferences = useCallback(async () => {
+        if (!user) return;
+        try {
+            await setDoc(doc(db, 'userPreferences', user.uid), {
+                defaultBranch: selectedBranch,
+                defaultYear: selectedYear,
+                defaultSemester: selectedSemester,
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+        }
+    }, [selectedBranch, selectedYear, selectedSemester, user]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!user || !initialPrefsLoaded) return;
-
-        const saveUserPreferences = async () => {
-            try {
-                await setDoc(doc(db, 'userPreferences', user.uid), {
-                    defaultBranch: selectedBranch,
-                    defaultYear: selectedYear,
-                    defaultSemester: selectedSemester,
-                    lastUpdated: serverTimestamp()
-                }, { merge: true });
-            } catch (error) {
-                console.error('Error saving preferences:', error);
-            }
-        };
 
         // Debounce the save to prevent too many writes
         const debounceTimer = setTimeout(() => {
@@ -399,7 +401,8 @@ export default function Dashboard() {
         }, 500);
 
         return () => clearTimeout(debounceTimer);
-    }, [selectedBranch, selectedYear, selectedSemester, user, initialPrefsLoaded]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, initialPrefsLoaded, saveUserPreferences, selectedBranch, selectedYear, selectedSemester]);
     const addBranch = async () => {
         if (!newBranch.trim()) return;
         try {

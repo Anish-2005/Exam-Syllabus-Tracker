@@ -1,6 +1,6 @@
 // context/AuthContext.js
 'use client'
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { auth, db } from '../lib/firebase';
 import { 
   onAuthStateChanged,
@@ -49,11 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [key: string]: any;
   }
 
-  const checkUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  const checkUserProfile = useCallback(async (uid: string): Promise<UserProfile | null> => {
     const userRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userRef);
     return userDoc.exists() ? (userDoc.data() as UserProfile) : null;
-  };
+  }, []);
 
   // Update user profile in Firestore
   interface UpdateUserProfileData {
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [checkUserProfile]);
 
   // Email/password functions
   interface SignupParams {

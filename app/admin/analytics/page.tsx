@@ -2,7 +2,7 @@
 'use client'
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useTheme } from '@/app/context/ThemeContext';
 import { Menu, BarChart2, Target, Award, TrendingUp, User, Mail, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, Sun, Moon, X, Search } from 'lucide-react';
@@ -56,77 +56,7 @@ export default function AdminKraKpiPage() {
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-    useEffect(() => {
-        if (currentUser && currentUser.email === "anishseth0510@gmail.com") {
-            setIsAdmin(true);
-            fetchAllData();
-        }
-    }, [currentUser]);
-
-    // --- Types ---
-    interface UserData {
-        id: string;
-        name: string;
-        email: string;
-        photoURL: string | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
-    }
-
-    interface SyllabusModule {
-        // Define module properties if needed
-        [key: string]: any;
-    }
-
-    interface SyllabusInfo {
-        name: string;
-        code: string;
-        year: number;
-        semester: number;
-        modules: SyllabusModule[];
-        [key: string]: any;
-    }
-
-    interface SyllabusDataMap {
-        [subjectId: string]: SyllabusInfo;
-    }
-
-    interface UserProgressData {
-        [subjectKey: string]: any;
-    }
-
-    interface UserProgressMap {
-        [userId: string]: UserProgressData;
-    }
-
-    interface KpiData {
-        subjectId: string;
-        name: string;
-        code: string;
-        progress: number;
-        completed: number;
-        total: number;
-        year: number;
-        semester: number;
-    }
-
-    interface KraData {
-        name: string;
-        subjects: number;
-        totalModules: number;
-        completedModules: number;
-        avgProgress: number;
-    }
-
-    interface YearlyProgressData {
-        name: string;
-        subjects: number;
-        totalModules: number;
-        completedModules: number;
-        progress: number;
-    }
-
-    const fetchAllData = async () => {
+    const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
             // Fetch users
@@ -182,7 +112,14 @@ export default function AdminKraKpiPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (currentUser && currentUser.email === "anishseth0510@gmail.com") {
+            setIsAdmin(true);
+            fetchAllData();
+        }
+    }, [currentUser, fetchAllData]);
 
     interface CalculateProgressResult {
         percentage: number;
@@ -239,7 +176,7 @@ export default function AdminKraKpiPage() {
     }
 
     const getUserKpiData = (userId: string): UserKpiData[] => {
-        const progress: UserProgressData | undefined = userProgress[userId];
+        const progress: UserKpiProgress | undefined = userProgress[userId];
         if (!progress) return [];
         
         return Object.entries(progress)
@@ -249,7 +186,10 @@ export default function AdminKraKpiPage() {
                 const subjectInfo = syllabusData[subjectId];
                 if (!subjectInfo) return null;
                 
-                const subjectProgress = value as UserKpiProgress;
+                let subjectProgress: UserKpiProgress = {};
+                if (typeof value === 'object' && value !== null) {
+                    subjectProgress = value as UserKpiProgress;
+                }
                 const progressResult = calculateProgress(subjectProgress, subjectId);
                 
                 return {

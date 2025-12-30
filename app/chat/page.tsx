@@ -201,7 +201,7 @@ export default function ChatPage() {
         }
 
         loadRooms()
-    }, [user, isSuperAdmin])
+    }, [user, isSuperAdmin, currentRoom])
 
     // Load messages for the current room
     useEffect(() => {

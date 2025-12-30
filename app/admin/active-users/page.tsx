@@ -2,7 +2,7 @@
 'use client'
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useTheme } from '@/app/context/ThemeContext';
 import { db } from '@/app/lib/firebase';
@@ -50,14 +50,7 @@ export default function UserDataPage() {
     const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
     const inputBg = theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900';
 
-    useEffect(() => {
-        if (currentUser && currentUser.email === "anishseth0510@gmail.com") {
-            setIsAdmin(true);
-            fetchAllData();
-        }
-    }, [currentUser]);
-
-    const fetchAllData = async () => {
+    const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
             // Fetch users
@@ -106,7 +99,14 @@ export default function UserDataPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (currentUser && currentUser.email === "anishseth0510@gmail.com") {
+            setIsAdmin(true);
+            fetchAllData();
+        }
+    }, [currentUser, fetchAllData]);
 
     interface FormatDate {
         (date: Date | null): string;

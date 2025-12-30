@@ -1,7 +1,7 @@
 'use client'
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { DocumentData } from 'firebase/firestore';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -36,13 +36,7 @@ export default function KraKpiPage() {
     const activeTabBg = isDark ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gradient-to-r from-indigo-500 to-purple-500';
     const inactiveTabBg = isDark ? 'bg-gray-700/50' : 'bg-white/60';
 
-    useEffect(() => {
-        if (user) {
-            fetchUserData();
-        }
-    }, [user]);
-
-    const fetchUserData = async () => {
+    const fetchUserData = useCallback(async () => {
         if (!user) return;
         setLoading(true);
         try {
@@ -82,7 +76,13 @@ export default function KraKpiPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (user) {
+            fetchUserData();
+        }
+    }, [user, fetchUserData]);
 
     interface SubjectInfo {
         name: string;

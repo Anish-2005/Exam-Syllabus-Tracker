@@ -8,7 +8,7 @@ interface UserTableProps {
   toggleUserExpand: (id: string) => void;
   formatDate: (date: Date | null) => string;
   userProgress: any;
-  renderProgressData: (userId: string) => JSX.Element;
+  renderProgressData: (userId: string) => React.ReactElement;
 }
 
 export default function UserTable({ filteredUsers, expandedUser, toggleUserExpand, formatDate, userProgress, renderProgressData }: UserTableProps) {

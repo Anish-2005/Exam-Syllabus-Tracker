@@ -2,7 +2,7 @@
 import ProtectedRoute from '@/app/components/ProtectedRoute'
 import { useAuth } from '@/app/context/AuthContext'
 import { useTheme } from '@/app/context/ThemeContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/app/lib/firebase'
 import { useRouter } from 'next/navigation'
@@ -49,13 +49,7 @@ export default function MyProgressPage() {
   const secondaryText = isDark ? 'text-gray-400' : 'text-gray-600'
   const borderColor = isDark ? 'border-gray-700' : 'border-purple-200'
 
-  useEffect(() => {
-    if (user) {
-      fetchUserData()
-    }
-  }, [user])
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     setLoading(true)
     if (!user) {
       setLoading(false)
@@ -105,7 +99,13 @@ export default function MyProgressPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchUserData()
+    }
+  }, [user, fetchUserData])
 
   const toggleSubjectExpand = (subjectId: string) => {
     setExpandedSubjects(prev =>
